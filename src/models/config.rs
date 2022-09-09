@@ -4,12 +4,15 @@ use anyhow::Result;
 use serde::Deserialize;
 use tokio::fs::File;
 
+// TODO: URL instead of String for sources
 #[derive(Deserialize)]
 pub struct Config {
     pub net: NetConfig,
+    pub proxy_server: String,
+    pub sources: Vec<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 pub struct NetConfig {
     pub listen_addr: String,
     pub listen_port: u16,
