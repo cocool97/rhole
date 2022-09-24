@@ -1,5 +1,6 @@
 use std::{collections::HashSet, convert::TryFrom};
 
+use anyhow::{anyhow, Result};
 use regex::RegexBuilder;
 use reqwest::Url;
 
@@ -12,7 +13,7 @@ pub struct BlacklistController {
 }
 
 impl BlacklistController {
-    pub async fn init_from_sources(sources: Vec<SourceEntry>) -> Self {
+    pub async fn init_from_sources(sources: Vec<SourceEntry>) -> Result<Self> {
         log::debug!("Received {} source(s)...", sources.len());
 
         let network_controller = NetworkController::new();
@@ -20,8 +21,7 @@ impl BlacklistController {
 
         let regex = RegexBuilder::new(".*\\s(?P<address>\\S*)")
             .swap_greed(false)
-            .build()
-            .unwrap();
+            .build()?;
 
         for source in sources {
             log::info!(
@@ -31,14 +31,14 @@ impl BlacklistController {
             );
             log::debug!("-> {}", source.comment);
             let content = match source.source_type {
-                SourceType::Network => network_controller
-                    .get(Url::try_from(source.location.as_str()).unwrap())
-                    .await
-                    .unwrap()
-                    .text()
-                    .await
-                    .unwrap(),
-                SourceType::File => tokio::fs::read_to_string(source.location).await.unwrap(),
+                SourceType::Network => {
+                    network_controller
+                        .get(Url::try_from(source.location.as_str())?)
+                        .await?
+                        .text()
+                        .await?
+                }
+                SourceType::File => tokio::fs::read_to_string(source.location).await?,
             };
 
             for line in content.lines() {
@@ -48,17 +48,15 @@ impl BlacklistController {
                 }
                 let address = regex
                     .captures(line)
-                    .unwrap()
-                    .name("address")
-                    .unwrap()
-                    .as_str();
+                    .and_then(|v| v.name("address").map(|address| address.as_str()))
+                    .ok_or_else(|| anyhow!("line does not match parsing regex..."))?;
                 blacklist.insert(address.into());
             }
         }
 
         log::debug!("Found {} addresses to blacklist...", blacklist.len());
 
-        Self { blacklist }
+        Ok(Self { blacklist })
     }
 
     pub fn get_blacklist(self) -> HashSet<String> {
