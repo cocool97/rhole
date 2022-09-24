@@ -11,6 +11,7 @@ use models::Opts;
 
 // TODO:
 // - RUST WEB frontend ?
+// - Auto update of sources
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -21,7 +22,8 @@ async fn main() -> Result<()> {
     log::info!("Starting...");
 
     let config = Config::from_file(opts.config_path).await?;
-    let blacklist_controller = BlacklistController::init_from_sources(config.sources).await;
+
+    let blacklist_controller = BlacklistController::init_from_sources(config.sources.entries).await?;
 
     let inbound_connections_controller = InboundConnectionsController::new(
         config.proxy_server,

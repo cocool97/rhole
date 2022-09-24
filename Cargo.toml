@@ -1,43 +1,43 @@
 [package]
 name = "rhole"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 [profile.release]
+opt-level = 'z'
+codegen-units = 1
 strip = "debuginfo"
 debug-assertions = false
 lto = "thin"
 
 [dependencies]
-anyhow = { version = "= 1.0.65", default-features = false, features = ["std"] }
-clap = { version = "= 3.2.17", default-features = false, features = [
+anyhow = { version = "1.0.66", default-features = false, features = ["std"] }
+bytes = { version = "1.2.1", default_features = false }
+clap = { version = "4.0.18", default-features = false, features = [
     "color",
     "derive",
     "std",
     "suggestions",
 ] }
-dns-parser = { version = "= 0.8.0", default-features = false }
-env_logger = { version = "= 0.9.0", default-features = false, features = [
+dns-message-parser = { version = "0.7.0", default-features = false }
+env_logger = { version = "0.9.1", default-features = false, features = [
     "atty",
     "termcolor",
     "humantime",
 ] }
-log = { version = "= 0.4.17", default-features = false }
-regex = { version = "= 1.6.0", default-features = false, features = [
+log = { version = "0.4.17", default-features = false }
+regex = { version = "1.6.0", default-features = false, features = [
     "perf",
     "std",
-    "unicode"
+    "unicode",
 ] }
-reqwest = { version = "= 0.11.11", default-features = false, features = [
-    "native-tls-vendored",
-    "json",
-] }
-serde = { version = "= 1.0.144", default-features = false, features = [
+reqwest = { version = "0.11.12", default-features = false, features = ["json"] }
+serde = { version = "1.0.147", default-features = false, features = [
     "derive",
     "std",
 ] }
-serde_yaml = { version = "= 0.9.10", default-features = false }
-tokio = { version = "= 1.20.1", default-features = false, features = [
+serde_yaml = { version = "0.9.14", default-features = false }
+tokio = { version = "1.21.2", default-features = false, features = [
     "fs",
     "macros",
     "net",
