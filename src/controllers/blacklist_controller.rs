@@ -3,6 +3,8 @@ use std::{collections::HashSet, convert::TryFrom};
 use regex::RegexBuilder;
 use reqwest::Url;
 
+use crate::models::{SourceEntry, SourceType};
+
 use super::NetworkController;
 
 pub struct BlacklistController {
@@ -10,7 +12,7 @@ pub struct BlacklistController {
 }
 
 impl BlacklistController {
-    pub async fn init_from_sources(sources: Vec<String>) -> Self {
+    pub async fn init_from_sources(sources: Vec<SourceEntry>) -> Self {
         log::debug!("Received {} source(s)...", sources.len());
 
         let network_controller = NetworkController::new();
@@ -22,13 +24,22 @@ impl BlacklistController {
             .unwrap();
 
         for source in sources {
-            let content = network_controller
-                .get(Url::try_from(source.as_str()).unwrap())
-                .await
-                .unwrap()
-                .text()
-                .await
-                .unwrap();
+            log::info!(
+                "Reading from {}: {} ...",
+                source.source_type,
+                source.location
+            );
+            log::debug!("-> {}", source.comment);
+            let content = match source.source_type {
+                SourceType::Network => network_controller
+                    .get(Url::try_from(source.location.as_str()).unwrap())
+                    .await
+                    .unwrap()
+                    .text()
+                    .await
+                    .unwrap(),
+                SourceType::File => tokio::fs::read_to_string(source.location).await.unwrap(),
+            };
 
             for line in content.lines() {
                 if line.starts_with('#') || line.is_empty() {

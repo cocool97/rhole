@@ -1,21 +1,44 @@
-use std::path::Path;
+use std::{fmt::Display, path::Path};
 
 use anyhow::Result;
 use serde::Deserialize;
 use tokio::fs::File;
 
-// TODO: URL instead of String for sources
 #[derive(Deserialize)]
 pub struct Config {
     pub net: NetConfig,
     pub proxy_server: String,
-    pub sources: Vec<String>,
+    pub sources: Vec<SourceEntry>,
 }
 
 #[derive(Clone, Deserialize)]
 pub struct NetConfig {
     pub listen_addr: String,
     pub listen_port: u16,
+}
+
+#[derive(Clone, Deserialize)]
+pub struct SourceEntry {
+    pub source_type: SourceType,
+    pub location: String,
+    pub comment: String,
+}
+
+#[derive(Clone, Deserialize)]
+pub enum SourceType {
+    Network,
+    File,
+}
+
+impl Display for SourceType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let val = match self {
+            SourceType::Network => "Network",
+            SourceType::File => "File",
+        };
+
+        write!(f, "{}", val)
+    }
 }
 
 impl Config {
