@@ -4,12 +4,12 @@ proxy_server:
 sources:
   update_interval: 5
   entries:
-    - source_type: !File
-      location: hosts.txt
-      comment: Global hosts file
-    # - source_type: !Network
-      # location: http://sbc.io/hosts/alternates/fakenews-gambling-porn-social/hosts
-      # comment: Remote hosts file
+    # - source_type: !File
+    #   location: hosts.txt
+    #   comment: Global hosts file
+    - source_type: !Network
+      location: http://sbc.io/hosts/alternates/fakenews-gambling-porn-social/hosts
+      comment: Remote hosts file
 net:
   listen_addr: "0.0.0.0"
-  listen_port: 4053
+  listen_port: 53

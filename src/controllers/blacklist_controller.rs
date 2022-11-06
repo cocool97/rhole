@@ -54,7 +54,8 @@ impl BlacklistController {
             }
         }
 
-        log::debug!("Found {} addresses to blacklist...", blacklist.len());
+        log::info!("Initialization finished...");
+        log::info!("Found {} addresses to blacklist...", blacklist.len());
 
         Ok(Self { blacklist })
     }
