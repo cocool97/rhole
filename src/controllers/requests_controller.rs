@@ -66,7 +66,8 @@ impl InboundConnectionsController {
         // TODO: Check trailing dots
         if blacklist.contains(question.domain_name.to_string().trim_end_matches('.')) {
             log::warn!(
-                "Domain {} is blacklisted. Ignoring it.",
+                "[{}] Domain {} is blacklisted. Ignoring it.",
+                origin_addr.ip(),
                 question.domain_name
             );
 

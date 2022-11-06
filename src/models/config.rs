@@ -1,24 +1,8 @@
-use std::{fmt::Display, io, path::Path};
+use std::{fmt::Display, path::Path};
 
 use anyhow::Result;
-use serde::de::Error;
-use serde::{Deserialize, Deserializer};
+use serde::Deserialize;
 use tokio::fs::File;
-
-fn check_path_exists<'de, D>(deserializer: D) -> Result<String, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let location: String = Deserialize::deserialize(deserializer)?;
-    if Path::new(&location).exists() {
-        Ok(location)
-    } else {
-        Err(D::Error::custom(io::Error::new(
-            std::io::ErrorKind::NotFound,
-            format!("No such file or directory: '{}'", location),
-        )))
-    }
-}
 
 #[derive(Deserialize)]
 pub struct Config {
@@ -42,13 +26,12 @@ pub struct ProxyServer {
 #[derive(Debug, Deserialize)]
 pub struct Sources {
     pub update_interval: u64,
-    pub entries: Vec<SourceEntry>
+    pub entries: Vec<SourceEntry>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct SourceEntry {
     pub source_type: SourceType,
-    #[serde(deserialize_with = "check_path_exists")]
     pub location: String,
     pub comment: String,
 }

@@ -24,3 +24,6 @@ This is an in-progress work, many things must still be achieved to reach version
 * Web monitoring interface
 * Code audit to improve performances + possible mistakes
 * Regularly update input sources
+* Making everything `async`
+* Increase DNS record TTL for blocked addresses
+* Log requests per equipments

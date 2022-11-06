@@ -1,10 +1,12 @@
 [package]
 description = "Rust local DNS adblocker"
-documentation = "README.md"
+authors = ["LIAUD Corentin <corentin.liaud@orange.fr>"]
 edition = "2021"
 license = "MIT"
+readme = "README.md"
 name = "rhole"
-version = "0.1.1"
+version = "0.1.0"
+repository = "https://github.com/cocool97/rhole"
 
 [[bin]]
 name = "rhole"
@@ -49,3 +51,29 @@ tokio = { version = "1.21.2", default-features = false, features = [
     "net",
     "rt-multi-thread",
 ] }
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "config.yml", dest = "/etc/rhole/config.yml", mode = "755", config = true },
+    { source = "rhole.service", dest = "/etc/systemd/system/rhole.service", mode = "755" },
+    { source = "target/armv7-unknown-linux-musleabihf/release/rhole", dest = "/usr/bin/rhole", mode = "755" },
+]
+
+[package.metadata.deb]
+assets = [
+    [
+        "config.yml",
+        "/etc/rhole/config.yml",
+        "755",
+    ],
+    [
+        "rhole.service",
+        "/etc/systemd/system/rhole.service",
+        "755",
+    ],
+    [
+        "target/armv7-unknown-linux-musleabihf/release/rhole",
+        "/usr/bin/rhole",
+        "755",
+    ],
+]
