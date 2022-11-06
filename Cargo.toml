@@ -1,14 +1,20 @@
 [package]
+description = "Rust local DNS adblocker"
+documentation = "README.md"
+edition = "2021"
+license = "MIT"
 name = "rhole"
 version = "0.1.1"
-edition = "2021"
+
+[[bin]]
+name = "rhole"
 
 [profile.release]
-opt-level = 'z'
 codegen-units = 1
-strip = "debuginfo"
 debug-assertions = false
 lto = "thin"
+opt-level = 'z'
+strip = "debuginfo"
 
 [dependencies]
 anyhow = { version = "1.0.66", default-features = false, features = ["std"] }
@@ -22,8 +28,8 @@ clap = { version = "4.0.18", default-features = false, features = [
 dns-message-parser = { version = "0.7.0", default-features = false }
 env_logger = { version = "0.9.1", default-features = false, features = [
     "atty",
-    "termcolor",
     "humantime",
+    "termcolor",
 ] }
 log = { version = "0.4.17", default-features = false }
 regex = { version = "1.6.0", default-features = false, features = [

@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 mod controllers;
 mod models;
 mod utils;
@@ -8,10 +10,6 @@ use anyhow::Result;
 use clap::Parser;
 use controllers::{BlacklistController, InboundConnectionsController};
 use models::Opts;
-
-// TODO:
-// - RUST WEB frontend ?
-// - Auto update of sources
 
 #[tokio::main]
 async fn main() -> Result<()> {

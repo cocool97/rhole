@@ -1,22 +1,26 @@
 # rhole: Rust local DNS adblocker
 
-## Cross-compilation for Raspberry Pi
+[![Documentation](https://docs.rs/rhole/badge.svg)](https://docs.rs/rhole)
+[![Latest version](https://img.shields.io/crates/v/rhole.svg)](https://crates.io/crates/rhole)
+[![dependency status](https://deps.rs/repo/github/cocool97/rhole/status.svg)](https://deps.rs/repo/github/cocool97/rhole)
+[![codecov](https://codecov.io/gh/cocool97/rhole/branch/master/graph/badge.svg?token=2PMZ6D9E5M)](https://codecov.io/gh/cocool97/rhole)
 
-Add this to your `.cargo/config` file:
+Highly configurable Rust local DNS adblocker.
 
-```toml
-[target.armv7-unknown-linux-gnueabihf]
-linker = "arm-linux-gnueabihf-gcc"
-```
+## Main advantages
 
-Install armv7 toolchain: 
+* Highly configurable
+    * Use of many kinds of blocking lists
+    * Remote DNS proxy server configuration
+* Easy to setup
+    * Can be cross-compiled to various targets
+    * Default configuration file
+    * RPM package build
 
-```bash
-rustup target add armv7-unknown-linux-gnueabihf
-```
+## Work to do
 
-And finally compile it:
+This is an in-progress work, many things must still be achieved to reach version `1.0.0`:
 
-```bash
-cargo build --release --target armv7-unknown-linux-gnueabihf
-```
+* Web monitoring interface
+* Code audit to improve performances + possible mistakes
+* Regularly update input sources
