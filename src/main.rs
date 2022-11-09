@@ -21,7 +21,8 @@ async fn main() -> Result<()> {
 
     let config = Config::from_file(opts.config_path).await?;
 
-    let blacklist_controller = BlacklistController::init_from_sources(config.sources.entries).await?;
+    let blacklist_controller =
+        BlacklistController::init_from_sources(config.sources.entries, config.database).await?;
 
     let inbound_connections_controller = InboundConnectionsController::new(
         config.proxy_server,

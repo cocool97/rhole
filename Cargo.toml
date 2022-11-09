@@ -1,12 +1,12 @@
 [package]
-description = "Rust local DNS adblocker"
 authors = ["LIAUD Corentin <corentin.liaud@orange.fr>"]
+description = "Rust local DNS adblocker"
 edition = "2021"
 license = "MIT"
-readme = "README.md"
 name = "rhole"
-version = "0.1.0"
+readme = "README.md"
 repository = "https://github.com/cocool97/rhole"
+version = "0.1.0"
 
 [[bin]]
 name = "rhole"
@@ -19,33 +19,36 @@ opt-level = 'z'
 strip = "debuginfo"
 
 [dependencies]
-anyhow = { version = "1.0.66", default-features = false, features = ["std"] }
-bytes = { version = "1.2.1", default_features = false }
-clap = { version = "4.0.18", default-features = false, features = [
+anyhow = { version = "= 1.0.66", default-features = false, features = ["std"] }
+bytes = { version = "= 1.2.1", default_features = false }
+clap = { version = "= 4.0.22", default-features = false, features = [
     "color",
     "derive",
     "std",
     "suggestions",
 ] }
-dns-message-parser = { version = "0.7.0", default-features = false }
-env_logger = { version = "0.9.1", default-features = false, features = [
+dns-message-parser = { version = "= 0.7.0", default-features = false }
+env_logger = { version = "= 0.9.3", default-features = false, features = [
     "atty",
     "humantime",
     "termcolor",
 ] }
-log = { version = "0.4.17", default-features = false }
-regex = { version = "1.6.0", default-features = false, features = [
+log = { version = "= 0.4.17", default-features = false }
+regex = { version = "= 1.7.0", default-features = false, features = [
     "perf",
     "std",
     "unicode",
 ] }
-reqwest = { version = "0.11.12", default-features = false, features = ["json"] }
-serde = { version = "1.0.147", default-features = false, features = [
+reqwest = { version = "= 0.11.12", default-features = false, features = ["json"] }
+serde = { version = "= 1.0.147", default-features = false, features = [
     "derive",
     "std",
 ] }
-serde_yaml = { version = "0.9.14", default-features = false }
-tokio = { version = "1.21.2", default-features = false, features = [
+serde_yaml = { version = "= 0.9.14", default-features = false }
+sled = { version = "= 0.34.7", default-features = false, features = [
+    "no_metrics",
+] }
+tokio = { version = "= 1.21.2", default-features = false, features = [
     "fs",
     "macros",
     "net",
@@ -62,18 +65,18 @@ assets = [
 [package.metadata.deb]
 assets = [
     [
-        "config.yml",
         "/etc/rhole/config.yml",
         "755",
+        "config.yml",
     ],
     [
-        "rhole.service",
         "/etc/systemd/system/rhole.service",
         "755",
+        "rhole.service",
     ],
     [
-        "target/armv7-unknown-linux-musleabihf/release/rhole",
         "/usr/bin/rhole",
         "755",
+        "target/armv7-unknown-linux-musleabihf/release/rhole",
     ],
 ]

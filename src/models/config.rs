@@ -6,9 +6,15 @@ use tokio::fs::File;
 
 #[derive(Deserialize)]
 pub struct Config {
+    pub database: DatabaseConfig,
     pub net: NetConfig,
     pub proxy_server: ProxyServer,
     pub sources: Sources,
+}
+
+#[derive(Deserialize)]
+pub struct DatabaseConfig {
+    pub path: String,
 }
 
 #[derive(Clone, Deserialize)]
