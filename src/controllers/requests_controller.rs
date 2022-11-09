@@ -1,19 +1,20 @@
-use std::{collections::HashSet, net::SocketAddr, ops::Deref, sync::Arc};
+use std::{net::SocketAddr, ops::Deref, sync::Arc};
 
 use anyhow::{anyhow, Result};
 use bytes::Bytes;
 use dns_message_parser::rr::{A, RR};
+use sled::Db;
 use tokio::net::UdpSocket;
 
 use crate::models::ProxyServer;
 
 pub struct InboundConnectionsController {
     proxy_server: Arc<ProxyServer>,
-    blacklist: Arc<HashSet<String>>,
+    blacklist: Arc<Db>,
 }
 
 impl InboundConnectionsController {
-    pub fn new(proxy_server: ProxyServer, blacklist: HashSet<String>) -> Self {
+    pub fn new(proxy_server: ProxyServer, blacklist: Db) -> Self {
         Self {
             proxy_server: Arc::new(proxy_server),
             blacklist: Arc::new(blacklist),
@@ -52,7 +53,7 @@ impl InboundConnectionsController {
     async fn handle_packet(
         socket: &UdpSocket,
         buffer: Bytes,
-        blacklist: &HashSet<String>,
+        blacklist: &Db,
         origin_addr: SocketAddr,
         proxy: &ProxyServer,
     ) -> Result<()> {
@@ -64,29 +65,43 @@ impl InboundConnectionsController {
 
         // TODO: Treat all questions !
         // TODO: Check trailing dots
-        if blacklist.contains(question.domain_name.to_string().trim_end_matches('.')) {
-            log::warn!(
-                "[{}] Domain {} is blacklisted. Ignoring it.",
-                origin_addr.ip(),
-                question.domain_name
-            );
+        let mut rev_address = String::new();
+        for component in question
+            .domain_name
+            .to_string()
+            .trim_end_matches('.')
+            .split('.')
+            .rev()
+        {
+            rev_address.push_str(component);
 
-            packet.answers = vec![RR::A(A {
-                domain_name: question.domain_name.clone(),
-                ttl: 86400,
-                ipv4_addr: "0.0.0.0".parse()?,
-            })];
+            if let Ok(Some(_)) = blacklist.get(&rev_address) {
+                log::warn!(
+                    "[{}] Domain {} is blacklisted. Ignoring it.",
+                    origin_addr.ip(),
+                    question.domain_name
+                );
 
-            socket.send_to(&packet.encode()?, origin_addr).await?;
-        } else {
-            let proxy_socket = UdpSocket::bind("0.0.0.0:0").await?;
-            proxy_socket.send_to(&buffer, proxy.to_addr()).await?;
-            let mut res_buffer = [0u8; 4096];
-            let received_size = proxy_socket.recv(&mut res_buffer).await?;
-            socket
-                .send_to(&res_buffer[..received_size], origin_addr)
-                .await?;
+                packet.answers = vec![RR::A(A {
+                    domain_name: question.domain_name.clone(),
+                    ttl: 86400,
+                    ipv4_addr: "0.0.0.0".parse()?,
+                })];
+
+                socket.send_to(&packet.encode()?, origin_addr).await?;
+                return Ok(());
+            }
+
+            rev_address.push('.');
         }
+
+        let proxy_socket = UdpSocket::bind("0.0.0.0:0").await?;
+        proxy_socket.send_to(&buffer, proxy.to_addr()).await?;
+        let mut res_buffer = [0u8; 4096];
+        let received_size = proxy_socket.recv(&mut res_buffer).await?;
+        socket
+            .send_to(&res_buffer[..received_size], origin_addr)
+            .await?;
 
         Ok(())
     }
