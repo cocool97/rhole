@@ -5,7 +5,7 @@ use regex::RegexBuilder;
 use reqwest::Url;
 use sled::Db;
 
-use crate::models::{DatabaseConfig, SourceEntry, SourceType};
+use crate::{models::{DatabaseConfig, SourceEntry, SourceType}, utils};
 
 use super::NetworkController;
 
@@ -58,15 +58,7 @@ impl BlacklistController {
                     .and_then(|v| v.name("address").map(|address| address.as_str()))
                     .ok_or_else(|| anyhow!("line does not match parsing regex..."))?;
 
-                // Addresses are added in reversed form
-                // e.g fr.facebook.com would be added as com.facebook.fr
-                // Like that we can iterate over each component of domain name and check if it'll be contained
-                let mut rev_address = String::new();
-                for component in address.split('.').rev() {
-                    rev_address.push_str(component);
-                    rev_address.push('.');
-                }
-                rev_address.pop();
+                let rev_address = utils::reverse_domain_name(address);
 
                 blacklist.insert(rev_address, true.to_string().as_bytes())?;
             }
