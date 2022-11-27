@@ -1,0 +1,17 @@
+database:
+  path: "rhole.db"
+proxy_server: 
+  addr: "8.8.8.8"
+  port: 53
+sources:
+  update_interval: 5
+  entries:
+    - source_type: !File
+      location: hosts.txt
+      comment: Global hosts file
+    # - source_type: !Network
+      # location: http://sbc.io/hosts/alternates/fakenews-gambling-porn-social/hosts
+      # comment: Remote hosts file
+net:
+  listen_addr: "127.0.0.1"
+  listen_port: 5053

@@ -5,7 +5,10 @@ use regex::RegexBuilder;
 use reqwest::Url;
 use sled::Db;
 
-use crate::{models::{DatabaseConfig, SourceEntry, SourceType}, utils};
+use crate::{
+    models::{DatabaseConfig, SourceEntry, SourceType},
+    utils,
+};
 
 use super::NetworkController;
 

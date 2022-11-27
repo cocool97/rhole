@@ -1,4 +1,9 @@
-use std::{fmt::Display, path::Path};
+use std::{
+    fmt::Display,
+    net::{AddrParseError, Ipv4Addr, SocketAddr, SocketAddrV4},
+    path::Path,
+    str::FromStr,
+};
 
 use anyhow::Result;
 use serde::Deserialize;
@@ -23,7 +28,7 @@ pub struct NetConfig {
     pub listen_port: u16,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 pub struct ProxyServer {
     pub addr: String,
     pub port: u16,
@@ -64,9 +69,14 @@ impl Display for SourceType {
     }
 }
 
-impl ProxyServer {
-    pub fn to_addr(&self) -> String {
-        format!("{}:{}", self.addr, self.port)
+impl TryInto<SocketAddr> for ProxyServer {
+    type Error = AddrParseError;
+
+    fn try_into(self) -> Result<SocketAddr, Self::Error> {
+        Ok(SocketAddr::V4(SocketAddrV4::new(
+            Ipv4Addr::from_str(&self.addr)?,
+            self.port,
+        )))
     }
 }
 

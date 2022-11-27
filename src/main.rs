@@ -4,12 +4,15 @@ mod controllers;
 mod models;
 mod utils;
 
+use crate::controllers::RequestsController;
 pub use crate::models::Config;
 
 use anyhow::Result;
 use clap::Parser;
-use controllers::{BlacklistController, InboundConnectionsController};
+use controllers::BlacklistController;
 use models::Opts;
+use tokio::net::UdpSocket;
+use trust_dns_server::ServerFuture;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -24,14 +27,17 @@ async fn main() -> Result<()> {
     let blacklist_controller =
         BlacklistController::init_from_sources(config.sources.entries, config.database).await?;
 
-    let inbound_connections_controller = InboundConnectionsController::new(
-        config.proxy_server,
-        blacklist_controller.get_blacklist(),
-    );
+    let socket = UdpSocket::bind((config.net.listen_addr.as_str(), config.net.listen_port)).await?;
 
-    inbound_connections_controller
-        .listen(config.net.listen_addr.as_str(), config.net.listen_port)
-        .await?;
+    let mut server = ServerFuture::new(
+        RequestsController::new(
+            blacklist_controller.get_blacklist(),
+            config.proxy_server.clone(),
+        )
+        .await?,
+    );
+    server.register_socket(socket);
+    server.block_until_done().await?;
 
     Ok(())
 }
