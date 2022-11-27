@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use clap::Parser;
 
 #[derive(Parser)]
+#[command(author, version, about, long_about)]
 pub struct Opts {
     /// Enables debug mode
     #[clap(short = 'd', long = "debug")]

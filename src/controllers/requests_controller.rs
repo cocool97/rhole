@@ -1,108 +1,99 @@
-use std::{net::SocketAddr, ops::Deref, sync::Arc};
-
-use anyhow::{anyhow, Result};
-use bytes::Bytes;
-use dns_message_parser::rr::{A, RR};
+use anyhow::Result;
 use sled::Db;
-use tokio::net::UdpSocket;
+use trust_dns_client::op::{MessageType, ResponseCode};
+use trust_dns_resolver::{
+    config::{NameServerConfig, Protocol, ResolverConfig, ResolverOpts},
+    name_server::{GenericConnection, GenericConnectionProvider, TokioRuntime},
+    AsyncResolver,
+};
+use trust_dns_server::{
+    authority::MessageResponseBuilder,
+    server::{Request, RequestHandler, ResponseHandler, ResponseInfo},
+};
 
-use crate::models::ProxyServer;
+use crate::models::{dns_default_response, ProxyServer};
 
-pub struct InboundConnectionsController {
-    proxy_server: Arc<ProxyServer>,
-    blacklist: Arc<Db>,
+pub struct RequestsController {
+    pub blacklist: Db,
+    resolver: AsyncResolver<GenericConnection, GenericConnectionProvider<TokioRuntime>>,
 }
 
-impl InboundConnectionsController {
-    pub fn new(proxy_server: ProxyServer, blacklist: Db) -> Self {
-        Self {
-            proxy_server: Arc::new(proxy_server),
-            blacklist: Arc::new(blacklist),
-        }
+impl RequestsController {
+    pub async fn new(blacklist: Db, proxy: ProxyServer) -> Result<Self> {
+        let mut resolver_config = ResolverConfig::default();
+        resolver_config.add_name_server(NameServerConfig::new(proxy.try_into()?, Protocol::Udp));
+        let resolver = AsyncResolver::tokio(resolver_config, ResolverOpts::default())?;
+
+        Ok(Self {
+            blacklist,
+            resolver,
+        })
     }
 
-    pub async fn listen(self, addr: &str, port: u16) -> Result<()> {
-        let socket = Arc::new(UdpSocket::bind((addr, port)).await?);
-        loop {
-            let mut buffer = [0u8; 4096];
-
-            // TODO: handle errors here
-            let (number_of_bytes, origin_addr) = socket.recv_from(&mut buffer).await?;
-            log::debug!("Received request from {}", origin_addr);
-
-            let blacklist = self.blacklist.clone();
-            let proxy = self.proxy_server.clone();
-            let core_socket = socket.clone();
-            let bytes = bytes::Bytes::copy_from_slice(&buffer[..number_of_bytes]);
-            tokio::spawn(async move {
-                if let Err(e) = Self::handle_packet(
-                    core_socket.deref(),
-                    bytes,
-                    blacklist.deref(),
-                    origin_addr,
-                    proxy.deref(),
-                )
-                .await
-                {
-                    log::error!("Error when handling packet: {e}");
-                }
-            });
-        }
-    }
-
-    async fn handle_packet(
-        socket: &UdpSocket,
-        buffer: Bytes,
-        blacklist: &Db,
-        origin_addr: SocketAddr,
-        proxy: &ProxyServer,
-    ) -> Result<()> {
-        let mut packet = dns_message_parser::Dns::decode(buffer.clone())?;
-        let question = packet
-            .questions
-            .first()
-            .ok_or_else(|| anyhow!("no questions in request..."))?;
+    async fn inner_handle_request<R: ResponseHandler>(
+        &self,
+        request: &Request,
+        response_handle: &mut R,
+    ) -> Result<ResponseInfo> {
+        let query = request.query();
+        let query_question = query.name().to_string();
+        let query_type = query.query_type();
 
         // TODO: Treat all questions !
         // TODO: Check trailing dots
         let mut rev_address = String::new();
-        for component in question
-            .domain_name
-            .to_string()
-            .trim_end_matches('.')
-            .split('.')
-            .rev()
-        {
+        for component in query_question.trim_end_matches('.').split('.').rev() {
             rev_address.push_str(component);
 
-            if let Ok(Some(_)) = blacklist.get(&rev_address) {
-                log::warn!(
-                    "[{}] Domain {} is blacklisted. Ignoring it.",
-                    origin_addr.ip(),
-                    question.domain_name
-                );
+            if let Ok(Some(_)) = self.blacklist.get(&rev_address) {
+                log::warn!("[{}] Blacklisted domain {}", request.src(), query_question);
 
-                packet.answers = vec![RR::A(A {
-                    domain_name: question.domain_name.clone(),
-                    ttl: 86400,
-                    ipv4_addr: "0.0.0.0".parse()?,
-                })];
+                let response = dns_default_response(request, ResponseCode::Refused);
 
-                socket.send_to(&packet.encode()?, origin_addr).await?;
-                return Ok(());
+                return Ok(response_handle.send_response(response).await?);
             }
 
             rev_address.push('.');
         }
 
-        let proxy_socket = UdpSocket::bind("0.0.0.0:0").await?;
-        proxy_socket.send_to(&buffer, proxy.to_addr()).await?;
-        let mut res_buffer = [0u8; 4096];
-        let received_size = proxy_socket.recv(&mut res_buffer).await?;
-        socket
-            .send_to(&res_buffer[..received_size], origin_addr)
-            .await?;
+        let response = self.resolver.lookup(query.name(), query_type).await?;
 
-        Ok(())
+        let response_builder = MessageResponseBuilder::from_message_request(request);
+        let mut response = response_builder.build(
+            *request.header(),
+            response.records(),
+            vec![],
+            vec![],
+            request.additionals(),
+        );
+
+        response
+            .header_mut()
+            .set_message_type(MessageType::Response);
+
+        Ok(response_handle.send_response(response).await?)
+    }
+}
+
+#[async_trait::async_trait]
+impl RequestHandler for RequestsController {
+    async fn handle_request<R: ResponseHandler>(
+        &self,
+        request: &Request,
+        mut response_handle: R,
+    ) -> ResponseInfo {
+        match self
+            .inner_handle_request(request, &mut response_handle)
+            .await
+        {
+            Ok(r) => r,
+            Err(_) => {
+                let response = dns_default_response(request, ResponseCode::ServFail);
+                response_handle
+                    .send_response(response)
+                    .await
+                    .expect("Cannot send response to client")
+            }
+        }
     }
 }
