@@ -20,15 +20,14 @@ strip = "debuginfo"
 
 [dependencies]
 anyhow = { version = "= 1.0.66" }
-async-trait = { version = "= 0.1.58" }
+async-trait = { version = "= 0.1.59" }
 bytes = { version = "= 1.3.0" }
-clap = { version = "= 4.0.27", features = ["derive"] }
-dns-message-parser = { version = "= 0.7.0" }
+clap = { version = "= 4.0.29", features = ["derive"] }
 env_logger = { version = "= 0.10.0" }
 log = { version = "= 0.4.17" }
 regex = { version = "= 1.7.0" }
 reqwest = { version = "= 0.11.13" }
-serde = { version = "= 1.0.147", features = ["derive"] }
+serde = { version = "= 1.0.148", features = ["derive"] }
 serde_yaml = { version = "= 0.9.14" }
 sled = { version = "= 0.34.7" }
 tokio = { version = "= 1.22.0", features = ["fs", "macros", "rt-multi-thread"] }
