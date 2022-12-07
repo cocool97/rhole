@@ -1,14 +1,25 @@
 use std::path::PathBuf;
 
-use clap::Parser;
+use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(author, version, about, long_about)]
+#[command(author, about, long_about)]
 pub struct Opts {
-    /// Enables debug mode
-    #[clap(short = 'd', long = "debug")]
-    pub debug: bool,
-    /// Path to server configuration file
-    #[clap(short = 'c', long = "config")]
-    pub config_path: PathBuf,
+    #[command(subcommand)]
+    pub command: RholeCommand,
+}
+
+#[derive(Subcommand)]
+pub enum RholeCommand {
+    /// Runs rhole
+    Start {
+        /// Enables debug mode
+        #[clap(short = 'd', long = "debug")]
+        debug: bool,
+        /// Path to server configuration file
+        #[clap(short = 'c', long = "config")]
+        config_path: PathBuf,
+    },
+    /// Displays build informations
+    Info,
 }

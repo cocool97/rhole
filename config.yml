@@ -10,7 +10,7 @@ sources:
     #   location: hosts.txt
     #   comment: Global hosts file
     - source_type: !Network
-      location: http://sbc.io/hosts/alternates/fakenews-gambling-porn-social/hosts
+      location: http://sbc.io/hosts/alternates/fakenews-gambling-porn/hosts
       comment: Remote hosts file
 net:
   listen_addr: "0.0.0.0"

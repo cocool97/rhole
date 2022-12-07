@@ -4,11 +4,12 @@ After=network.target
 
 [Service]
 User=root
-ExecStart=/usr/bin/rhole --config config.yml
+ExecStart=/usr/bin/rhole start --config config.yml
 Environment="RUST_LOG=rhole=info"
 WorkingDirectory=/etc/rhole
 Restart=on-failure
 AmbientCapabilities=CAP_NET_BIND_SERVICE
+SyslogIdentifier=rhole
 
 [Install]
 WantedBy=multi-user.target

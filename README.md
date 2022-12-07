@@ -20,6 +20,28 @@ Highly configurable Rust local DNS adblocker.
 
 `rhole` reads blacklist entries from various remote sources, inserts them in a [sled](https://docs.rs/sled/latest/sled/) database and checks against it for every DNS entries asked.
 
+## Compilation
+
+* Fedora
+
+```bash
+# Adds support for arm-gnueabihf toolchain
+sudo dnf copr enable lantw44/arm-linux-gnueabihf-toolchain
+sudo dnf install arm-linux-gnueabihf-{binutils,gcc,glibc}
+
+# armv7-musl
+CC=arm-linux-gnueabihf-gcc cargo build --release --target armv7-unknown-linux-musleabihf
+
+# armv7
+cargo build --release --target armv7-unknown-linux-gnueabihf
+```
+
+* Ubuntu
+
+```bash
+TODO
+```
+
 ## Work to do
 
 This is an in-progress work, many things must still be achieved to reach version `1.0.0`:

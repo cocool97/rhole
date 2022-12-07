@@ -1,5 +1,6 @@
 [package]
 authors = ["LIAUD Corentin <corentin.liaud@orange.fr>"]
+build = "src/build.rs"
 description = "Rust local DNS adblocker"
 edition = "2021"
 license = "MIT"
@@ -16,7 +17,7 @@ codegen-units = 1
 debug-assertions = false
 lto = "thin"
 opt-level = 'z'
-strip = "debuginfo"
+strip = true
 
 [dependencies]
 anyhow = { version = "= 1.0.66" }
@@ -26,14 +27,18 @@ clap = { version = "= 4.0.29", features = ["derive"] }
 env_logger = { version = "= 0.10.0" }
 log = { version = "= 0.4.17" }
 regex = { version = "= 1.7.0" }
-reqwest = { version = "= 0.11.13" }
+reqwest = { version = "= 0.11.13", default-features = false, features = ["rustls-tls"] }
 serde = { version = "= 1.0.148", features = ["derive"] }
 serde_yaml = { version = "= 0.9.14" }
 sled = { version = "= 0.34.7" }
 tokio = { version = "= 1.22.0", features = ["fs", "macros", "rt-multi-thread"] }
 trust-dns-client = { version = "= 0.22.0" }
 trust-dns-resolver = { version = "= 0.22.0", features = ["tokio-runtime"] }
-trust-dns-server = { version = "= 0.22.0", features = ["tokio-rustls"] }
+trust-dns-server = { version = "= 0.22.0" }
+
+[build-dependencies]
+anyhow = { version = "= 1.0.66" }
+vergen = { version = "= 7.4.3" }
 
 [package.metadata.generate-rpm]
 assets = [
@@ -45,18 +50,18 @@ assets = [
 [package.metadata.deb]
 assets = [
     [
+        "config.yml",
         "/etc/rhole/config.yml",
         "755",
-        "config.yml",
     ],
     [
+        "rhole.service",
         "/etc/systemd/system/rhole.service",
         "755",
-        "rhole.service",
     ],
     [
+        "target/armv7-unknown-linux-musleabihf/release/rhole",
         "/usr/bin/rhole",
         "755",
-        "target/armv7-unknown-linux-musleabihf/release/rhole",
     ],
 ]
