@@ -1,7 +1,7 @@
 use std::{
     fmt::Display,
     net::{AddrParseError, Ipv4Addr, SocketAddr, SocketAddrV4},
-    path::Path,
+    path::{Path, PathBuf},
     str::FromStr,
 };
 
@@ -19,7 +19,8 @@ pub struct Config {
 
 #[derive(Deserialize)]
 pub struct DatabaseConfig {
-    pub path: String,
+    pub internal: PathBuf,
+    pub stats: PathBuf,
 }
 
 #[derive(Clone, Deserialize)]

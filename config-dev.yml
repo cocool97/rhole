@@ -1,5 +1,6 @@
 database:
-  path: "rhole.db"
+  internal: "rhole.db"
+  stats: "rhole-stats.db"
 proxy_server: 
   addr: "8.8.8.8"
   port: 53

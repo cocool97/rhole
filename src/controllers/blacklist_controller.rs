@@ -27,7 +27,7 @@ impl BlacklistController {
 
         // TODO: Configure creation
         // TODO: Add a trait for cache
-        let blacklist = sled::open(db_config.path)?;
+        let blacklist = sled::open(db_config.internal)?;
 
         let regex = RegexBuilder::new(".*\\s(?P<address>\\S*)")
             .swap_greed(false)

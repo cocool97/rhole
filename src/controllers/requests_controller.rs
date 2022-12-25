@@ -13,13 +13,20 @@ use trust_dns_server::{
 
 use crate::models::{dns_default_response, ProxyServer};
 
+use super::DatabaseController;
+
 pub struct RequestsController {
-    pub blacklist: Db,
+    blacklist: Db,
     resolver: AsyncResolver<GenericConnection, GenericConnectionProvider<TokioRuntime>>,
+    stats_controller: DatabaseController,
 }
 
 impl RequestsController {
-    pub async fn new(blacklist: Db, proxy: ProxyServer) -> Result<Self> {
+    pub async fn new(
+        blacklist: Db,
+        proxy: ProxyServer,
+        stats_controller: DatabaseController,
+    ) -> Result<Self> {
         let mut resolver_config = ResolverConfig::default();
         resolver_config.add_name_server(NameServerConfig::new(proxy.try_into()?, Protocol::Udp));
         let resolver = AsyncResolver::tokio(resolver_config, ResolverOpts::default())?;
@@ -27,6 +34,7 @@ impl RequestsController {
         Ok(Self {
             blacklist,
             resolver,
+            stats_controller,
         })
     }
 
@@ -49,8 +57,17 @@ impl RequestsController {
                 log::warn!("[{}] Blacklisted domain {}", request.src(), query_question);
 
                 let response = dns_default_response(request, ResponseCode::Refused);
+                let response_info = response_handle.send_response(response).await?;
 
-                return Ok(response_handle.send_response(response).await?);
+                if let Err(e) = self
+                    .stats_controller
+                    .add_blocked_request(request.src().ip(), query_question)
+                    .await
+                {
+                    log::error!("Error during database insertion: {}", e);
+                }
+
+                return Ok(response_info);
             }
 
             rev_address.push('.');
