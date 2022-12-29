@@ -14,5 +14,9 @@ sources:
       location: http://sbc.io/hosts/alternates/fakenews-gambling-porn/hosts
       comment: Remote hosts file
 net:
-  listen_addr: "0.0.0.0"
-  listen_port: 53
+  dns:
+    listen_addr: "0.0.0.0"
+    listen_port: 53
+  web_interface:
+    listen_addr: "0.0.0.0"
+    listen_port: 80

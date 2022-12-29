@@ -1,15 +1,18 @@
+use anyhow::Result;
+use futures::TryStreamExt;
+use sqlx::{
+    sqlite::{SqliteConnectOptions, SqlitePoolOptions, SqliteQueryResult},
+    Pool, Row, Sqlite,
+};
 use std::{
     net::IpAddr,
     path::Path,
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use anyhow::Result;
-use sqlx::{
-    sqlite::{SqliteConnectOptions, SqlitePoolOptions, SqliteQueryResult},
-    Pool, Row, Sqlite,
-};
+use crate::models::BlockedRequest;
 
+#[derive(Clone)]
 pub struct DatabaseController {
     pool: Pool<Sqlite>,
 }
@@ -91,6 +94,27 @@ impl DatabaseController {
         self._upsert_client_informations(client_address).await?;
         self._add_blocked_request(client_address, blocked_request)
             .await
+    }
+
+    pub async fn get_blocked_requests(&self, num: Option<u32>) -> Result<Vec<BlockedRequest>> {
+        let mut conn = self.pool.acquire().await?;
+
+        // TODO: change hardcoded value of 1024
+        let num_entries = num.unwrap_or(1024);
+
+        let mut rows = sqlx::query(
+            r#"SELECT * FROM blocked_requests ORDER BY timestamp DESC LIMIT ? ;
+        "#,
+        )
+        .bind(num_entries)
+        .fetch(&mut conn);
+
+        let mut res = vec![];
+        while let Some(row) = rows.try_next().await? {
+            res.push(BlockedRequest::try_from(row)?)
+        }
+
+        Ok(res)
     }
 
     async fn _upsert_client_informations(

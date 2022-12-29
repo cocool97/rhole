@@ -23,13 +23,25 @@ pub struct DatabaseConfig {
     pub stats: PathBuf,
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Deserialize)]
 pub struct NetConfig {
+    pub dns: NetDnsConfig,
+    pub web_interface: NetWebInterfaceConfig,
+}
+
+#[derive(Deserialize)]
+pub struct NetDnsConfig {
     pub listen_addr: String,
     pub listen_port: u16,
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Deserialize)]
+pub struct NetWebInterfaceConfig {
+    pub listen_addr: String,
+    pub listen_port: u16,
+}
+
+#[derive(Deserialize)]
 pub struct ProxyServer {
     pub addr: String,
     pub port: u16,
@@ -41,20 +53,20 @@ pub struct Sources {
     pub entries: Vec<SourceEntry>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct SourceEntry {
     pub source_type: SourceType,
     pub location: String,
     pub comment: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub enum SourceType {
     Network,
     File,
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Deserialize)]
 pub struct Cache {
     pub validity: u16,
 }

@@ -4,6 +4,7 @@ mod commands;
 mod controllers;
 mod models;
 mod utils;
+mod web_handlers;
 
 use crate::models::RholeCommand;
 
