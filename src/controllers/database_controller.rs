@@ -10,12 +10,14 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use crate::models::BlockedRequest;
+use crate::api::models::{BlockedRequest, Client};
 
 #[derive(Clone)]
 pub struct DatabaseController {
     pool: Pool<Sqlite>,
 }
+
+// TODO: Enable journal mode ?
 
 impl DatabaseController {
     pub async fn init_database<P: AsRef<Path>>(database_path: P) -> Result<Self> {
@@ -55,32 +57,6 @@ impl DatabaseController {
             )
             .execute(&mut conn)
             .await?;
-
-            // sqlx::query(
-            //     r#"
-            //     CREATE TABLE IF NOT EXISTS monthly_stats (
-            //         month_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            //         month_name STRING,
-            //         client_id INTEGER,
-            //         blocked_requests INTEGER,
-            //         FOREIGN KEY(client_id) REFERENCES clients(client_id)
-            //     );"#,
-            // )
-            // .execute(&mut conn)
-            // .await?;
-
-            // sqlx::query(
-            //     r#"
-            //     CREATE TABLE IF NOT EXISTS yearly_stats (
-            //         year_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            //         year_name STRING,
-            //         client_id INTEGER,
-            //         blocked_requests INTEGER,
-            //         FOREIGN KEY(client_id) REFERENCES clients(client_id)
-            //     );"#,
-            // )
-            // .execute(&mut conn)
-            // .await?;
         }
 
         Ok(Self { pool })
@@ -103,7 +79,7 @@ impl DatabaseController {
         let num_entries = num.unwrap_or(1024);
 
         let mut rows = sqlx::query(
-            r#"SELECT * FROM blocked_requests ORDER BY timestamp DESC LIMIT ? ;
+            r#"SELECT * FROM blocked_requests ORDER BY timestamp DESC LIMIT ?;
         "#,
         )
         .bind(num_entries)
@@ -112,6 +88,23 @@ impl DatabaseController {
         let mut res = vec![];
         while let Some(row) = rows.try_next().await? {
             res.push(BlockedRequest::try_from(row)?)
+        }
+
+        Ok(res)
+    }
+
+    pub async fn get_clients(&self) -> Result<Vec<Client>> {
+        let mut conn = self.pool.acquire().await?;
+
+        let mut rows = sqlx::query(
+            r#"SELECT * FROM clients ORDER BY last_seen;
+        "#,
+        )
+        .fetch(&mut conn);
+
+        let mut res = vec![];
+        while let Some(row) = rows.try_next().await? {
+            res.push(Client::try_from(row)?)
         }
 
         Ok(res)

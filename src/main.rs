@@ -1,10 +1,10 @@
 #![forbid(unsafe_code)]
 
+mod api;
 mod commands;
 mod controllers;
 mod models;
 mod utils;
-mod web_handlers;
 
 use crate::models::RholeCommand;
 

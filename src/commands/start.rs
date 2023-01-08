@@ -1,24 +1,26 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, time::SystemTime};
 
 use actix_web::{
     web::{self, Data},
-    App, HttpResponse, HttpServer,
+    App, HttpServer,
 };
 use anyhow::Result;
 use tokio::net::UdpSocket;
 use trust_dns_server::ServerFuture;
 
 use crate::{
+    api::handlers::{api_route_not_found, blocked_requests, clients, infos, route_not_found},
     controllers::{BlacklistController, DatabaseController, RequestsController},
     models::{AppData, Config},
     utils,
-    web_handlers::blocked_requests,
 };
 
 pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
+    let start_time = SystemTime::now();
+
     utils::set_log_level(debug);
 
-    log::info!("Starting...");
+    log::info!("Starting rhole server...");
 
     let config = Config::from_file(config_path).await?;
 
@@ -47,16 +49,20 @@ pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
 
     let app_data = Data::new(AppData {
         database_controller,
+        start_time,
     });
 
     HttpServer::new(move || {
         App::new()
             .app_data(Data::clone(&app_data))
-            .route("/blocked", web::get().to(blocked_requests))
-            .default_service(
-                actix_web::web::route()
-                    .to(|| async { HttpResponse::MethodNotAllowed().body("Route not found...") }),
+            .service(
+                web::scope("/api")
+                    .route("/blocked", web::get().to(blocked_requests))
+                    .route("/clients", web::get().to(clients))
+                    .route("/infos", web::get().to(infos))
+                    .default_service(web::route().to(api_route_not_found)),
             )
+            .default_service(web::route().to(route_not_found))
     })
     .bind((
         config.net.web_interface.listen_addr.as_str(),
