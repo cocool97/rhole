@@ -7,7 +7,7 @@ license = "MIT"
 name = "rhole"
 readme = "README.md"
 repository = "https://github.com/cocool97/rhole"
-version = "0.1.4"
+version = "0.1.5"
 
 [[bin]]
 name = "rhole"
@@ -29,8 +29,10 @@ env_logger = { version = "= 0.10.0" }
 futures = { version = "0.3.25" }
 humantime = { version = "= 2.1.0" }
 log = { version = "= 0.4.17" }
-regex = { version = "= 1.7.0" }
-reqwest = { version = "= 0.11.13", features = ["rustls-tls"] }
+regex = { version = "= 1.7.1" }
+reqwest = { version = "= 0.11.13", default-features = false, features = [
+    "rustls-tls",
+] }
 serde = { version = "= 1.0.152", features = ["derive"] }
 serde_yaml = { version = "= 0.9.16" }
 sled = { version = "= 0.34.7" }
@@ -48,5 +50,5 @@ vergen = { version = "= 7.5.0" }
 assets = [
     { source = "config.yml", dest = "/etc/rhole/config.yml", mode = "755", config = true },
     { source = "rhole.service", dest = "/etc/systemd/system/rhole.service", mode = "755" },
-    { source = "target/release/rhole", dest = "/usr/bin/rhole", mode = "755" },
+    { source = "target/x86_64-unknown-linux-musl/release/rhole", dest = "/usr/bin/rhole", mode = "755" },
 ]
