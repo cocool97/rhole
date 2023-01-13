@@ -1,7 +1,8 @@
 use actix_web::{web::Data, HttpResponse, Responder};
 use anyhow::Result;
+use common::Client;
 
-use crate::{api::models::Client, models::AppData};
+use crate::models::AppData;
 
 use super::not_found::internal_server_error;
 

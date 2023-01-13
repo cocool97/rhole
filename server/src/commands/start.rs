@@ -1,5 +1,6 @@
 use std::{path::PathBuf, time::SystemTime};
 
+use actix_files::Files;
 use actix_web::{
     web::{self, Data},
     App, HttpServer,
@@ -62,6 +63,7 @@ pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
                     .route("/infos", web::get().to(infos))
                     .default_service(web::route().to(api_route_not_found)),
             )
+            .service(Files::new("/", "dist/").index_file("index.html"))
             .default_service(web::route().to(route_not_found))
     })
     .bind((
