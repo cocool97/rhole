@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use reqwest::{Client, ClientBuilder};
 
 pub struct RholeClient {
@@ -9,10 +9,17 @@ pub struct RholeClient {
 impl RholeClient {
     pub fn new() -> Result<Self> {
         let client = ClientBuilder::new().build()?;
+
         Ok(Self {
             client,
-            // TODO: Change it !
-            url: "http://127.0.0.1:8080/api".to_string(),
+            url: format!(
+                "{}/api",
+                web_sys::window()
+                    .ok_or_else(|| anyhow!("Could not get window..."))?
+                    .location()
+                    .origin()
+                    .map_err(|_| anyhow!("Could not get origin for window..."))?
+            ),
         })
     }
 }
