@@ -1,9 +1,9 @@
 mod app;
 mod card;
-mod title;
 mod clients;
+mod title;
 
-pub use clients::Clients;
-pub use card::Card;
-pub use title::Title;
 pub use app::App;
+pub use card::Card;
+pub use clients::Clients;
+pub use title::Title;
