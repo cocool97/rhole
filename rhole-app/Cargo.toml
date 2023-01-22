@@ -3,8 +3,8 @@ authors.workspace = true
 edition.workspace = true
 license.workspace = true
 name = "app"
-version.workspace = true
 repository.workspace = true
+version.workspace = true
 
 [dependencies]
 anyhow = { version = "= 1.0.68" }
@@ -19,3 +19,4 @@ wasm-bindgen-futures = { version = "= 0.4.33" }
 wasm-logger = { version = "= 0.2.0" }
 web-sys = { version = "= 0.3.60", features = ["Location"] }
 yew = { version = "= 0.20.0", features = ["csr"] }
+yew-router = { version = "= 0.17.0" }
