@@ -1,16 +1,19 @@
 [package]
-edition = "2021"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
 name = "app"
-version = "0.1.0"
+version.workspace = true
+repository.workspace = true
 
 [dependencies]
 anyhow = { version = "= 1.0.68" }
-common = { path = "../common" }
+common = { path = "../rhole-common" }
 lazy_static = { version = "= 1.4.0" }
 log = { version = "= 0.4.17" }
-reqwest = { version = "= 0.11.13", default-features = false, features = [
+reqwest = { version = "= 0.11.14", default-features = false, features = [
+    "json",
     "rustls-tls",
-    "json"
 ] }
 wasm-bindgen-futures = { version = "= 0.4.33" }
 wasm-logger = { version = "= 0.2.0" }

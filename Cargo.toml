@@ -1,5 +1,10 @@
 [workspace]
-members = ["app", "common", "server"]
+members = ["rhole", "rhole-app", "rhole-common"]
+package.authors = ["LIAUD Corentin <corentin.liaud@orange.fr>"]
+package.edition = "2021"
+package.license = "MIT"
+package.repository = "https://github.com/cocool97/rhole"
+package.version = "0.1.6"
 
 [profile.release]
 codegen-units = 1
