@@ -63,7 +63,13 @@ pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
                     .route("/infos", web::get().to(infos))
                     .default_service(web::route().to(api_route_not_found)),
             )
-            .service(Files::new("/", "dist/").index_file("index.html"))
+            .service(
+                Files::new(
+                    &config.web_resources.mount_path,
+                    &config.web_resources.static_files,
+                )
+                .index_file(&config.web_resources.index_file),
+            )
             .default_service(web::route().to(route_not_found))
     })
     .bind((

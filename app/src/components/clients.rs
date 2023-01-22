@@ -1,12 +1,7 @@
 use crate::RHOLE_CLIENT;
 use common::Client;
 use log::error;
-use yew::{
-    function_component, html, use_effect_with_deps, use_state, Html, Properties, UseStateHandle,
-};
-
-#[derive(Properties, PartialEq)]
-pub struct ClientProps {}
+use yew::{function_component, html, use_effect_with_deps, use_state, Html, UseStateHandle};
 
 #[function_component]
 pub fn Clients() -> Html {

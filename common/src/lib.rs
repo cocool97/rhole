@@ -1,3 +1,3 @@
-mod api;
+mod api_models;
 
-pub use api::Client;
+pub use api_models::*;
