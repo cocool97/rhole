@@ -1,9 +1,10 @@
 mod api;
 mod components;
+mod router;
 
 use api::RholeClient;
-use components::App;
 use lazy_static::lazy_static;
+use router::RholeRouter;
 use wasm_logger::Config;
 
 lazy_static! {
@@ -13,5 +14,5 @@ lazy_static! {
 fn main() {
     wasm_logger::init(Config::default());
 
-    yew::Renderer::<App>::new().render();
+    yew::Renderer::<RholeRouter>::new().render();
 }
