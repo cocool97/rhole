@@ -1,6 +1,6 @@
 use yew::{function_component, html, Html};
 
-use crate::components::{Card, Clients, Title};
+use crate::components::{BlockedRequests, Card, Clients, Title};
 
 #[function_component]
 pub fn App() -> Html {
@@ -14,6 +14,7 @@ pub fn App() -> Html {
                 <Card />
             </div>
             <Clients />
+            <BlockedRequests />
         </>
     }
 }

@@ -1,5 +1,5 @@
 use anyhow::Result;
-use common::Client;
+use common::{BlockedRequest, Client};
 use futures::TryStreamExt;
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqlitePoolOptions, SqliteQueryResult},
@@ -10,8 +10,6 @@ use std::{
     path::Path,
     time::{SystemTime, UNIX_EPOCH},
 };
-
-use crate::api::models::BlockedRequest;
 
 #[derive(Clone)]
 pub struct DatabaseController {
@@ -88,7 +86,12 @@ impl DatabaseController {
 
         let mut res = vec![];
         while let Some(row) = rows.try_next().await? {
-            res.push(BlockedRequest::try_from(row)?)
+            res.push(BlockedRequest {
+                request_id: row.try_get("request_id")?,
+                client_id: row.try_get("client_id")?,
+                request_address: row.try_get("request_address")?,
+                timestamp: row.try_get("timestamp")?,
+            })
         }
 
         Ok(res)

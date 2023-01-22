@@ -12,6 +12,7 @@ use tokio::fs::File;
 #[derive(Deserialize)]
 pub struct Config {
     pub database: DatabaseConfig,
+    pub web_resources: WebResources,
     pub net: NetConfig,
     pub proxy_server: ProxyServer,
     pub sources: Sources,
@@ -21,6 +22,13 @@ pub struct Config {
 pub struct DatabaseConfig {
     pub internal: PathBuf,
     pub stats: PathBuf,
+}
+
+#[derive(Deserialize)]
+pub struct WebResources {
+    pub static_files: PathBuf,
+    pub mount_path: String,
+    pub index_file: String,
 }
 
 #[derive(Deserialize)]

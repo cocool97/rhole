@@ -1,6 +1,10 @@
 database:
   internal: "rhole.db"
   stats: "rhole-stats.db"
+web_resources:
+  static_files: "/etc/rhole/web"
+  index_file: "index.html"
+  mount_path: "/"
 proxy_server: 
   addr: "8.8.8.8"
   port: 53

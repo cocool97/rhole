@@ -1,9 +1,10 @@
-use crate::{api::models::BlockedRequest, models::AppData};
+use crate::models::AppData;
 use actix_web::{
     web::{Data, Query},
     HttpResponse, Responder,
 };
 use anyhow::Result;
+use common::BlockedRequest;
 use serde::Deserialize;
 
 use super::not_found::internal_server_error;
