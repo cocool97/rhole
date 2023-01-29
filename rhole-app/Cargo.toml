@@ -20,3 +20,9 @@ wasm-logger = { version = "= 0.2.0" }
 web-sys = { version = "= 0.3.60", features = ["Location"] }
 yew = { version = "= 0.20.0", features = ["csr"] }
 yew-router = { version = "= 0.17.0" }
+yew_icons = { version = "= 0.7.0", features = [
+    "BootstrapBarChartLine",
+    "BootstrapListCheck",
+    "BootstrapPeople",
+    "HeroiconsOutlineInformationCircle"
+] }

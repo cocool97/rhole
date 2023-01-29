@@ -1,4 +1,5 @@
 use yew::{function_component, html, Html};
+use yew_icons::IconId;
 use yew_router::BrowserRouter;
 
 use crate::{
@@ -12,10 +13,10 @@ pub fn App() -> Html {
         <BrowserRouter>
             <Title />
             <Grid>
-                // <Clients />
-                // <BlockedRequests />
-                <GridComponent name={"Clients"} icon="assets/user.svg" link_to={Route::Clients} />
-                <GridComponent name={"Blocked Requests"} icon="assets/list.svg" link_to={Route::BlockedRequests} />
+                <GridComponent name={"Clients"} icon={IconId::BootstrapPeople} link_to={Route::Clients} />
+                <GridComponent name={"Blocked Requests"} icon={IconId::BootstrapListCheck} link_to={Route::BlockedRequests} />
+                <GridComponent name={"Stats"} icon={IconId::BootstrapBarChartLine} link_to={Route::Stats} />
+                <GridComponent name={"Server informations"} icon={IconId::HeroiconsOutlineInformationCircle} link_to={Route::ServerInformations}/>
             </Grid>
         </BrowserRouter>
     }

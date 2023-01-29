@@ -9,13 +9,6 @@ pub async fn api_route_not_found() -> HttpResponse {
     HttpResponse::NotFound().json(&api_error)
 }
 
-pub async fn route_not_found() -> HttpResponse {
-    let api_error = ApiError {
-        message: "Route not found".into(),
-    };
-    HttpResponse::NotFound().json(&api_error)
-}
-
 pub fn internal_server_error<S: Into<String>>(message: S) -> HttpResponse {
     let api_error = ApiError {
         message: message.into(),

@@ -1,4 +1,4 @@
-use crate::RHOLE_CLIENT;
+use crate::{components::InputList, RHOLE_CLIENT};
 use common::Client;
 use log::error;
 use yew::{function_component, html, use_effect_with_deps, use_state, Html, UseStateHandle};
@@ -28,22 +28,23 @@ pub fn Clients() -> Html {
         );
     }
 
-    let clients_list: Vec<Html> = all_clients
+    let clients_list: Vec<Vec<String>> = all_clients
         .iter()
         .map(|user| {
-            html! {
-                <div>
-                    <h1>{"Client: "}{user.client_id}</h1>
-                    <p>{"IP address: "} {user.address.clone()}</p>
-                    <p>{"Last seen: "}{user.last_seen}</p>
-                </div>
-            }
+            vec![
+                user.client_id.to_string(),
+                user.address.to_string(),
+                user.last_seen.to_string(),
+            ]
         })
         .collect();
 
     html! {
         <div>
-            {clients_list}
+            <InputList
+                header={vec!["Client ID", "IP Address", "Last seen"]}
+                input={clients_list}
+            />
         </div>
     }
 }
