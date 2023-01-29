@@ -8,6 +8,7 @@ version.workspace = true
 
 [dependencies]
 anyhow = { version = "= 1.0.68" }
+chrono = { version = "= 0.4.23" }
 common = { path = "../rhole-common" }
 lazy_static = { version = "= 1.4.0" }
 log = { version = "= 0.4.17" }
@@ -24,5 +25,5 @@ yew_icons = { version = "= 0.7.0", features = [
     "BootstrapBarChartLine",
     "BootstrapListCheck",
     "BootstrapPeople",
-    "HeroiconsOutlineInformationCircle"
+    "HeroiconsOutlineInformationCircle",
 ] }

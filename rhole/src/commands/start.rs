@@ -77,8 +77,6 @@ pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
                     fn_service(move |req: ServiceRequest| {
                         let index_file = index_file.clone();
                         let static_files = static_files.clone();
-                        dbg!(&req);
-
                         async move {
                             let (req, _) = req.into_parts();
                             let file = NamedFile::open_async(static_files.join(index_file)).await?;
