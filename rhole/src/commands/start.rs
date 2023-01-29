@@ -1,7 +1,8 @@
 use std::{path::PathBuf, time::SystemTime};
 
-use actix_files::Files;
+use actix_files::{Files, NamedFile};
 use actix_web::{
+    dev::{fn_service, ServiceRequest, ServiceResponse},
     web::{self, Data},
     App, HttpServer,
 };
@@ -10,7 +11,7 @@ use tokio::net::UdpSocket;
 use trust_dns_server::ServerFuture;
 
 use crate::{
-    api::handlers::{api_route_not_found, blocked_requests, clients, infos, route_not_found},
+    api::handlers::{api_route_not_found, blocked_requests, clients, infos},
     controllers::{BlacklistController, DatabaseController, RequestsController},
     models::{AppData, Config},
     utils,
@@ -63,14 +64,30 @@ pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
                     .route("/infos", web::get().to(infos))
                     .default_service(web::route().to(api_route_not_found)),
             )
-            .service(
+            .default_service({
+                let index_file = config.web_resources.index_file.clone();
+                let static_files = config.web_resources.static_files.clone();
+
                 Files::new(
                     &config.web_resources.mount_path,
                     &config.web_resources.static_files,
                 )
-                .index_file(&config.web_resources.index_file),
-            )
-            .default_service(web::route().to(route_not_found))
+                .index_file(&config.web_resources.index_file)
+                .default_handler({
+                    fn_service(move |req: ServiceRequest| {
+                        let index_file = index_file.clone();
+                        let static_files = static_files.clone();
+                        dbg!(&req);
+
+                        async move {
+                            let (req, _) = req.into_parts();
+                            let file = NamedFile::open_async(static_files.join(index_file)).await?;
+                            let res = file.into_response(&req);
+                            Ok(ServiceResponse::new(req, res))
+                        }
+                    })
+                })
+            })
     })
     .bind((
         config.net.web_interface.listen_addr.as_str(),

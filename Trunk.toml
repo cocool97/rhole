@@ -1,10 +1,8 @@
 [build]
 # The output dir for all final assets.
-dist = "../dist/"
+dist = "dist/"
 # The index HTML file to drive the bundling process.
 target = "index.html"
-# Build in release mode.
-release = true
 # The public URL from which assets are to be served.
 public_url = "/"
 # Whether to include hash values in the output file names.

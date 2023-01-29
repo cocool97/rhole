@@ -1,4 +1,4 @@
-use crate::RHOLE_CLIENT;
+use crate::{components::InputList, RHOLE_CLIENT};
 use common::BlockedRequest;
 use log::error;
 use yew::{function_component, html, use_effect_with_deps, use_state, Html, UseStateHandle};
@@ -28,23 +28,22 @@ pub fn BlockedRequests() -> Html {
         );
     }
 
-    let blocked_requests_list: Vec<Html> = blocked_requests
+    let blocked_requests_list: Vec<Vec<String>> = blocked_requests
         .iter()
         .map(|request| {
-            html! {
-                <div>
-                    <h1>{"Request ID: "}{request.request_id}</h1>
-                    <p>{"Client_id: "} {request.client_id}</p>
-                    <p>{"Request address: "}{request.request_address.clone()}</p>
-                    <p>{"Timestamp: "}{request.timestamp}</p>
-                </div>
-            }
+            vec![
+                request.request_id.to_string(),
+                request.client_id.to_string(),
+                request.request_address.to_string(),
+                request.timestamp.to_string(),
+            ]
         })
         .collect();
 
     html! {
-        <div>
-            {blocked_requests_list}
-        </div>
+        <InputList
+            header={vec!["Request ID", "Client ID", "Request address", "Timestamp"]}
+            input={blocked_requests_list}
+        />
     }
 }

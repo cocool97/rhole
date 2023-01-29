@@ -86,7 +86,7 @@ impl Display for SourceType {
             SourceType::File => "File",
         };
 
-        write!(f, "{}", val)
+        write!(f, "{val}")
     }
 }
 
