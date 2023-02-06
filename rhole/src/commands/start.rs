@@ -7,13 +7,14 @@ use actix_web::{
     App, HttpServer,
 };
 use anyhow::Result;
-use tokio::net::UdpSocket;
+use common::ServerConfig;
+use tokio::{fs::File, net::UdpSocket};
 use trust_dns_server::ServerFuture;
 
 use crate::{
     api::handlers::{api_route_not_found, blocked_requests, clients, infos},
     controllers::{BlacklistController, DatabaseController, RequestsController},
-    models::{AppData, Config},
+    models::AppData,
     utils,
 };
 
@@ -24,12 +25,13 @@ pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
 
     log::info!("Starting rhole server...");
 
-    let config = Config::from_file(config_path).await?;
+    let f = File::open(&config_path).await?;
+    let config: ServerConfig = serde_yaml::from_reader(f.into_std().await)?;
 
     let database_controller = DatabaseController::init_database(&config.database.stats).await?;
 
     let blacklist_controller =
-        BlacklistController::init_from_sources(config.sources.entries, config.database).await?;
+        BlacklistController::init_from_sources(&config.sources.entries, &config.database).await?;
 
     let dns_socket = UdpSocket::bind((
         config.net.dns.listen_addr.as_str(),
@@ -40,7 +42,7 @@ pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
     let mut server = ServerFuture::new(
         RequestsController::new(
             blacklist_controller.get_blacklist(),
-            config.proxy_server,
+            config.proxy_server.clone(),
             database_controller.clone(),
         )
         .await?,
@@ -50,6 +52,7 @@ pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
     tokio::spawn(async { server.block_until_done().await });
 
     let app_data = Data::new(AppData {
+        config: config.clone(),
         database_controller,
         start_time,
     });
@@ -62,6 +65,7 @@ pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
                     .route("/blocked", web::get().to(blocked_requests))
                     .route("/clients", web::get().to(clients))
                     .route("/infos", web::get().to(infos))
+                    .route("/config", web::get().to(crate::api::handlers::config))
                     .default_service(web::route().to(api_route_not_found)),
             )
             .default_service({

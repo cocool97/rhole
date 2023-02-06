@@ -1,4 +1,5 @@
 use anyhow::Result;
+use common::ProxyServer;
 use sled::Db;
 use trust_dns_client::op::{MessageType, ResponseCode};
 use trust_dns_resolver::{
@@ -11,7 +12,7 @@ use trust_dns_server::{
     server::{Request, RequestHandler, ResponseHandler, ResponseInfo},
 };
 
-use crate::models::{dns_default_response, ProxyServer};
+use crate::models::dns_default_response;
 
 use super::DatabaseController;
 

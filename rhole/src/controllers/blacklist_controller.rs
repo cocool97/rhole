@@ -1,14 +1,12 @@
 use std::convert::TryFrom;
 
 use anyhow::{anyhow, Result};
+use common::{DatabaseConfig, SourceEntry, SourceType};
 use regex::RegexBuilder;
 use reqwest::Url;
 use sled::Db;
 
-use crate::{
-    models::{DatabaseConfig, SourceEntry, SourceType},
-    utils,
-};
+use crate::utils;
 
 use super::NetworkController;
 
@@ -18,8 +16,8 @@ pub struct BlacklistController {
 
 impl BlacklistController {
     pub async fn init_from_sources(
-        sources: Vec<SourceEntry>,
-        db_config: DatabaseConfig,
+        sources: &[SourceEntry],
+        db_config: &DatabaseConfig,
     ) -> Result<Self> {
         log::debug!("Received {} source(s)...", sources.len());
 
@@ -27,7 +25,7 @@ impl BlacklistController {
 
         // TODO: Configure creation
         // TODO: Add a trait for cache
-        let blacklist = sled::open(db_config.internal)?;
+        let blacklist = sled::open(&db_config.internal)?;
 
         let regex = RegexBuilder::new(".*\\s(?P<address>\\S*)")
             .swap_greed(false)
@@ -48,7 +46,7 @@ impl BlacklistController {
                         .text()
                         .await?
                 }
-                SourceType::File => tokio::fs::read_to_string(source.location).await?,
+                SourceType::File => tokio::fs::read_to_string(&source.location).await?,
             };
 
             for line in content.lines() {

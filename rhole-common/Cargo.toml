@@ -7,4 +7,5 @@ repository.workspace = true
 version.workspace = true
 
 [dependencies]
+anyhow = { version = "= 1.0.69" }
 serde = { version = "1.0.152", features = ["derive"] }

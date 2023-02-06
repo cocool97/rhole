@@ -1,16 +1,14 @@
+use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use std::{
     fmt::Display,
     net::{AddrParseError, Ipv4Addr, SocketAddr, SocketAddrV4},
-    path::{Path, PathBuf},
+    path::PathBuf,
     str::FromStr,
 };
 
-use anyhow::Result;
-use serde::Deserialize;
-use tokio::fs::File;
-
-#[derive(Deserialize)]
-pub struct Config {
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ServerConfig {
     pub database: DatabaseConfig,
     pub web_resources: WebResources,
     pub net: NetConfig,
@@ -18,63 +16,63 @@ pub struct Config {
     pub sources: Sources,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct DatabaseConfig {
     pub internal: PathBuf,
     pub stats: PathBuf,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct WebResources {
     pub static_files: PathBuf,
     pub mount_path: String,
     pub index_file: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct NetConfig {
     pub dns: NetDnsConfig,
     pub web_interface: NetWebInterfaceConfig,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct NetDnsConfig {
     pub listen_addr: String,
     pub listen_port: u16,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct NetWebInterfaceConfig {
     pub listen_addr: String,
     pub listen_port: u16,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ProxyServer {
     pub addr: String,
     pub port: u16,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Sources {
     pub update_interval: u64,
     pub entries: Vec<SourceEntry>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct SourceEntry {
     pub source_type: SourceType,
     pub location: String,
     pub comment: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum SourceType {
     Network,
     File,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Cache {
     pub validity: u16,
 }
@@ -98,12 +96,5 @@ impl TryInto<SocketAddr> for ProxyServer {
             Ipv4Addr::from_str(&self.addr)?,
             self.port,
         )))
-    }
-}
-
-impl Config {
-    pub async fn from_file<P: AsRef<Path>>(p: P) -> Result<Self> {
-        let f = File::open(p).await?;
-        Ok(serde_yaml::from_reader(f.into_std().await)?)
     }
 }

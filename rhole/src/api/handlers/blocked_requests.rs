@@ -24,7 +24,7 @@ pub async fn blocked_requests(
     }
 }
 
-pub async fn _blocked_requests(
+async fn _blocked_requests(
     data: Data<AppData>,
     query: Option<Query<QueryInfo>>,
 ) -> Result<Vec<BlockedRequest>> {

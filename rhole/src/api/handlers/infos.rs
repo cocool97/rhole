@@ -15,7 +15,7 @@ pub async fn infos(data: Data<AppData>) -> impl Responder {
     }
 }
 
-pub async fn _infos(data: Data<AppData>) -> Result<Infos> {
+async fn _infos(data: Data<AppData>) -> Result<Infos> {
     let formatted_duration = SystemTime::now().duration_since(data.start_time)?;
 
     Ok(Infos {

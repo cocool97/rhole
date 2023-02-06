@@ -1,6 +1,7 @@
 mod app;
 mod blocked_requests;
 mod clients;
+mod config;
 mod grid;
 mod grid_component;
 mod list;
@@ -11,6 +12,7 @@ mod title;
 pub use app::App;
 pub use blocked_requests::BlockedRequests;
 pub use clients::Clients;
+pub use config::Config;
 pub use grid::Grid;
 pub use grid_component::GridComponent;
 pub use list::InputList;

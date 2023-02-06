@@ -13,6 +13,6 @@ pub async fn clients(data: Data<AppData>) -> impl Responder {
     }
 }
 
-pub async fn _clients(data: Data<AppData>) -> Result<Vec<Client>> {
+async fn _clients(data: Data<AppData>) -> Result<Vec<Client>> {
     data.database_controller.get_clients().await
 }

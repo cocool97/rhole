@@ -1,5 +1,6 @@
 mod blocked_requests;
 mod clients;
+mod config;
 mod infos;
 mod rhole_client;
 
