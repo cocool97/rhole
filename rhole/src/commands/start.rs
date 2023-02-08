@@ -12,7 +12,7 @@ use tokio::{fs::File, net::UdpSocket};
 use trust_dns_server::ServerFuture;
 
 use crate::{
-    api::handlers::{api_route_not_found, blocked_requests, clients, infos},
+    api::handlers::{api_route_not_found, blocked_domains, blocked_requests, clients, infos},
     controllers::{BlacklistController, DatabaseController, RequestsController},
     models::AppData,
     utils,
@@ -28,10 +28,13 @@ pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
     let f = File::open(&config_path).await?;
     let config: ServerConfig = serde_yaml::from_reader(f.into_std().await)?;
 
-    let database_controller = DatabaseController::init_database(&config.database.stats).await?;
+    let database_controller = DatabaseController::init_database(&config.database_path).await?;
 
-    let blacklist_controller =
-        BlacklistController::init_from_sources(&config.sources.entries, &config.database).await?;
+    let blacklist_controller = BlacklistController::init_from_sources(
+        &config.sources.entries,
+        database_controller.clone(),
+    )
+    .await?;
 
     let dns_socket = UdpSocket::bind((
         config.net.dns.listen_addr.as_str(),
@@ -40,12 +43,7 @@ pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
     .await?;
 
     let mut server = ServerFuture::new(
-        RequestsController::new(
-            blacklist_controller.get_blacklist(),
-            config.proxy_server.clone(),
-            database_controller.clone(),
-        )
-        .await?,
+        RequestsController::new(config.proxy_server.clone(), blacklist_controller).await?,
     );
     server.register_socket(dns_socket);
 
@@ -66,6 +64,7 @@ pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
                     .route("/clients", web::get().to(clients))
                     .route("/infos", web::get().to(infos))
                     .route("/config", web::get().to(crate::api::handlers::config))
+                    .route("/blocked_domains", web::get().to(blocked_domains))
                     .default_service(web::route().to(api_route_not_found)),
             )
             .default_service({

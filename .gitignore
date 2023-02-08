@@ -3,5 +3,4 @@
 hosts.txt
 dev-config.yml
 dev-hosts.txt
-rhole.db
-rhole-stats.db
+rhole.db*

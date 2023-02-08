@@ -1,36 +1,33 @@
-use std::convert::TryFrom;
+use std::{convert::TryFrom, net::IpAddr};
 
 use anyhow::{anyhow, Result};
-use common::{DatabaseConfig, SourceEntry, SourceType};
+use common::{SourceEntry, SourceType};
 use regex::RegexBuilder;
 use reqwest::Url;
-use sled::Db;
+use sqlx::sqlite::SqliteQueryResult;
 
 use crate::utils;
 
-use super::NetworkController;
+use super::{DatabaseController, NetworkController};
 
 pub struct BlacklistController {
-    blacklist: Db,
+    db_controller: DatabaseController,
 }
 
 impl BlacklistController {
     pub async fn init_from_sources(
         sources: &[SourceEntry],
-        db_config: &DatabaseConfig,
+        db_controller: DatabaseController,
     ) -> Result<Self> {
         log::debug!("Received {} source(s)...", sources.len());
 
         let network_controller = NetworkController::new();
 
-        // TODO: Configure creation
-        // TODO: Add a trait for cache
-        let blacklist = sled::open(&db_config.internal)?;
-
         let regex = RegexBuilder::new(".*\\s(?P<address>\\S*)")
             .swap_greed(false)
             .build()?;
 
+        log::info!("Starting blacklist insertion...");
         for source in sources {
             log::info!(
                 "Reading from {}: {} ...",
@@ -49,6 +46,7 @@ impl BlacklistController {
                 SourceType::File => tokio::fs::read_to_string(&source.location).await?,
             };
 
+            let mut blacklisted_domains = vec![];
             for line in content.lines() {
                 if line.starts_with('#') || line.is_empty() {
                     // Skipping comments
@@ -61,17 +59,35 @@ impl BlacklistController {
 
                 let rev_address = utils::reverse_domain_name(address);
 
-                blacklist.insert(rev_address, true.to_string().as_bytes())?;
+                blacklisted_domains.push(rev_address);
+            }
+
+            if let Ok(entries_added) = db_controller.add_blocked_domains(blacklisted_domains).await
+            {
+                log::info!("Initialization finished...");
+                log::info!("Found {} addresses to blacklist...", entries_added);
             }
         }
 
-        log::info!("Initialization finished...");
-        log::info!("Found {} addresses to blacklist...", blacklist.len());
-
-        Ok(Self { blacklist })
+        Ok(Self { db_controller })
     }
 
-    pub fn get_blacklist(self) -> Db {
-        self.blacklist
+    pub async fn is_domain_blacklisted<S: AsRef<str>>(
+        &self,
+        domain_address: S,
+    ) -> Result<Option<u32>> {
+        self.db_controller
+            .is_domain_blacklisted(domain_address)
+            .await
+    }
+
+    pub async fn add_blocked_request(
+        &self,
+        client_ip: IpAddr,
+        domain_id: u32,
+    ) -> Result<SqliteQueryResult> {
+        self.db_controller
+            .add_blocked_request(client_ip, domain_id)
+            .await
     }
 }

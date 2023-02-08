@@ -27,7 +27,6 @@ reqwest = { version = "= 0.11.14", default-features = false, features = [
 ] }
 serde = { version = "= 1.0.152", features = ["derive"] }
 serde_yaml = { version = "= 0.9.17" }
-sled = { version = "= 0.34.7" }
 sqlx = { version = "= 0.6.2", features = ["runtime-tokio-rustls", "sqlite"] }
 tokio = { version = "= 1.25.0", features = ["fs", "macros", "rt-multi-thread"] }
 trust-dns-client = { version = "= 0.22.0" }

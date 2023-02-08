@@ -1,6 +1,4 @@
-database:
-  internal: "rhole.db"
-  stats: "rhole-stats.db"
+database_path: rhole.db
 web_resources:
   static_files: "dist"
   index_file: "index.html"

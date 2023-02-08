@@ -1,6 +1,5 @@
 use anyhow::Result;
 use common::ProxyServer;
-use sled::Db;
 use trust_dns_client::op::{MessageType, ResponseCode};
 use trust_dns_resolver::{
     config::{NameServerConfig, Protocol, ResolverConfig, ResolverOpts},
@@ -14,28 +13,25 @@ use trust_dns_server::{
 
 use crate::models::dns_default_response;
 
-use super::DatabaseController;
+use super::BlacklistController;
 
 pub struct RequestsController {
-    blacklist: Db,
     resolver: AsyncResolver<GenericConnection, GenericConnectionProvider<TokioRuntime>>,
-    stats_controller: DatabaseController,
+    blacklist_controller: BlacklistController,
 }
 
 impl RequestsController {
     pub async fn new(
-        blacklist: Db,
         proxy: ProxyServer,
-        stats_controller: DatabaseController,
+        blacklist_controller: BlacklistController,
     ) -> Result<Self> {
         let mut resolver_config = ResolverConfig::default();
         resolver_config.add_name_server(NameServerConfig::new(proxy.try_into()?, Protocol::Udp));
         let resolver = AsyncResolver::tokio(resolver_config, ResolverOpts::default())?;
 
         Ok(Self {
-            blacklist,
             resolver,
-            stats_controller,
+            blacklist_controller,
         })
     }
 
@@ -54,15 +50,19 @@ impl RequestsController {
         for component in query_question.trim_end_matches('.').split('.').rev() {
             rev_address.push_str(component);
 
-            if let Ok(Some(_)) = self.blacklist.get(&rev_address) {
+            if let Ok(Some(domain_id)) = self
+                .blacklist_controller
+                .is_domain_blacklisted(&rev_address)
+                .await
+            {
                 log::warn!("[{}] Blacklisted domain {}", request.src(), query_question);
 
                 let response = dns_default_response(request, ResponseCode::Refused);
                 let response_info = response_handle.send_response(response).await?;
 
                 if let Err(e) = self
-                    .stats_controller
-                    .add_blocked_request(request.src().ip(), query_question)
+                    .blacklist_controller
+                    .add_blocked_request(request.src().ip(), domain_id)
                     .await
                 {
                     log::error!("Error during database insertion: {}", e);

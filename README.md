@@ -18,7 +18,7 @@ Highly configurable Rust local DNS adblocker.
 
 ## How does it work ?
 
-`rhole` reads blacklist entries from various remote sources, inserts them in a [sled](https://docs.rs/sled/latest/sled/) database and checks against it for every DNS entries asked.
+`rhole` reads blacklist entries from various remote sources, inserts them in database and checks against it for every DNS requests received.
 
 ## Compilation
 

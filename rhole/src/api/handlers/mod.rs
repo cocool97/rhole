@@ -1,9 +1,11 @@
+mod blocked_domains;
 mod blocked_requests;
 mod clients;
 mod config;
 mod infos;
 mod not_found;
 
+pub use blocked_domains::blocked_domains;
 pub use blocked_requests::blocked_requests;
 pub use clients::clients;
 pub use config::config;

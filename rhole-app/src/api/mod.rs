@@ -1,3 +1,4 @@
+mod blocked_domains;
 mod blocked_requests;
 mod clients;
 mod config;

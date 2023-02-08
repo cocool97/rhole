@@ -9,17 +9,11 @@ use std::{
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ServerConfig {
-    pub database: DatabaseConfig,
+    pub database_path: PathBuf,
     pub web_resources: WebResources,
     pub net: NetConfig,
     pub proxy_server: ProxyServer,
     pub sources: Sources,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct DatabaseConfig {
-    pub internal: PathBuf,
-    pub stats: PathBuf,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
