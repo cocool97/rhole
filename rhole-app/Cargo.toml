@@ -10,6 +10,7 @@ version.workspace = true
 anyhow = { version = "= 1.0.69" }
 chrono = { version = "= 0.4.23" }
 common = { path = "../rhole-common" }
+gloo = { version = "= 0.8.0" }
 lazy_static = { version = "= 1.4.0" }
 log = { version = "= 0.4.17" }
 reqwest = { version = "= 0.11.14", default-features = false, features = [
@@ -23,8 +24,9 @@ yew = { version = "= 0.20.0", features = ["csr"] }
 yew-router = { version = "= 0.17.0" }
 yew_icons = { version = "= 0.7.0", features = [
     "BootstrapBarChartLine",
+    "BootstrapFileEarmarkBinary",
     "BootstrapListCheck",
     "BootstrapPeople",
     "HeroiconsOutlineInformationCircle",
-    "BootstrapFileEarmarkBinary"
+    "OcticonsBlocked16"
 ] }

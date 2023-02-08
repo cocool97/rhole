@@ -2,7 +2,9 @@ use yew::{function_component, html, Html};
 use yew_router::BrowserRouter;
 use yew_router::{Routable, Switch};
 
-use crate::components::{App, BlockedRequests, Clients, Config, ServerInformations, Stats};
+use crate::components::{
+    App, BlockedDomains, BlockedRequests, Clients, Config, ServerInformations, Stats,
+};
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum Route {
@@ -20,6 +22,8 @@ pub enum Route {
     Config,
     #[at("/informations")]
     ServerInformations,
+    #[at("/blocked_domains")]
+    BlockedDomains,
     #[not_found]
     #[at("/404")]
     NotFound,
@@ -33,6 +37,7 @@ fn switch(routes: Route) -> Html {
         Route::Stats => html!(<Stats />),
         Route::ServerInformations => html!(<ServerInformations />),
         Route::Config => html!(<Config />),
+        Route::BlockedDomains => html!(<BlockedDomains />),
         // TODO: 404 page !
         Route::NotFound => html! { <h1>{ "404" }</h1> },
     }

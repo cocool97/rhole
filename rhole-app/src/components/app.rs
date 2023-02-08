@@ -14,6 +14,7 @@ pub fn App() -> Html {
             <Title />
             <Grid>
                 <GridComponent name={"Clients"} icon={IconId::BootstrapPeople} link_to={Route::Clients} />
+                <GridComponent name={"Blocked domains"} icon={IconId::OcticonsBlocked16} link_to={Route::BlockedDomains} />
                 <GridComponent name={"Blocked Requests"} icon={IconId::BootstrapListCheck} link_to={Route::BlockedRequests} />
                 <GridComponent name={"Stats"} icon={IconId::BootstrapBarChartLine} link_to={Route::Stats} />
                 <GridComponent name={"Server informations"} icon={IconId::HeroiconsOutlineInformationCircle} link_to={Route::ServerInformations}/>

@@ -1,35 +1,53 @@
-use crate::{components::InputList, RHOLE_CLIENT};
+use crate::{
+    components::{InputList, UpdatedComponent},
+    RHOLE_CLIENT,
+};
 use chrono::{DateTime, NaiveDateTime, Utc};
 use common::BlockedRequest;
 use log::error;
-use yew::{function_component, html, use_effect_with_deps, use_state, Html, UseStateHandle};
+use yew::{function_component, html, use_state, Callback, Html, Properties, UseStateHandle};
 
 #[function_component]
 pub fn BlockedRequests() -> Html {
-    let blocked_requests: UseStateHandle<Vec<BlockedRequest>> = use_state(Vec::new);
+    let blocked_requests = use_state(Vec::new);
+    let blocked_requests_child = blocked_requests.clone();
 
-    {
+    let callback: Callback<()> = Callback::from(move |_| {
         let blocked_requests = blocked_requests.clone();
 
-        use_effect_with_deps(
-            move |_| {
-                wasm_bindgen_futures::spawn_local(async move {
-                    let response = RHOLE_CLIENT.blocked_requests().await;
-                    match response {
-                        Ok(clients) => blocked_requests.set(clients),
-                        Err(e) => {
-                            error!("Error encountered: {e}");
-                            blocked_requests.set(vec![])
-                        }
-                    }
-                });
-                || ()
-            },
-            (),
-        );
-    }
+        wasm_bindgen_futures::spawn_local(async move {
+            let response = RHOLE_CLIENT.blocked_requests().await;
+            match response {
+                Ok(clients) => blocked_requests.set(clients),
+                Err(e) => {
+                    error!("Error encountered: {e}");
+                    blocked_requests.set(vec![])
+                }
+            }
+        });
+    });
 
-    let blocked_requests_list: Vec<Vec<String>> = blocked_requests
+    html!(
+        <UpdatedComponent
+            tick_interval_ms={5 * 1000}
+            update_callback={callback}
+        >
+            <InnerBlockedRequests
+                blocked_requests={blocked_requests_child}
+            />
+        </UpdatedComponent>
+    )
+}
+
+#[derive(Properties, PartialEq)]
+pub struct InnerBlockedRequestsProps {
+    pub blocked_requests: UseStateHandle<Vec<BlockedRequest>>,
+}
+
+#[function_component]
+fn InnerBlockedRequests(props: &InnerBlockedRequestsProps) -> Html {
+    let blocked_requests_list: Vec<Vec<String>> = props
+        .blocked_requests
         .iter()
         .map(|request| {
             // Create a NaiveDateTime from the timestamp
