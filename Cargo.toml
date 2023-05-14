@@ -4,7 +4,7 @@ package.authors = ["LIAUD Corentin <corentin.liaud@orange.fr>"]
 package.edition = "2021"
 package.license = "MIT"
 package.repository = "https://github.com/cocool97/rhole"
-package.version = "0.1.11"
+package.version = "0.1.12"
 
 [profile.release]
 codegen-units = 1

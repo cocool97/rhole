@@ -1,11 +1,15 @@
 database_path: rhole.db
+tls:
+  certificate_path: keys/crt.pem
+  pkey_path: keys/key.pem
 web_resources:
   static_files: "dist"
   index_file: "index.html"
   mount_path: "/"
-proxy_server: 
-  addr: "8.8.8.8"
-  port: 53
+proxy_server:
+  ip: "1.1.1.1"
+  port: 853
+  tls_dns_name: cloudflare-dns.com
 sources:
   update_interval: 5
   entries:
@@ -13,12 +17,16 @@ sources:
       location: hosts.txt
       comment: Global hosts file
     # - source_type: !Network
-      # location: http://sbc.io/hosts/alternates/fakenews-gambling-porn-social/hosts
-      # comment: Remote hosts file
+    # location: http://sbc.io/hosts/alternates/fakenews-gambling-porn/hosts
+    # comment: Remote hosts file
 net:
   dns:
     listen_addr: "0.0.0.0"
     listen_port: 5053
+  dot:
+    listen_addr: "0.0.0.0"
+    listen_port: 8053
+    timeout: 2
   web_interface:
     listen_addr: "0.0.0.0"
-    listen_port: 8080
+    listen_port: 40443

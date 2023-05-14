@@ -6,12 +6,12 @@ edition.workspace = true
 license.workspace = true
 name = "rhole"
 readme = "README.md"
-version.workspace = true
 repository.workspace = true
+version.workspace = true
 
 [dependencies]
 actix-files = { version = "0.6.2" }
-actix-web = { version = "4.2.1" }
+actix-web = { version = "4.2.1", features = ["rustls"]}
 anyhow = { version = "= 1.0.69" }
 async-trait = { version = "= 0.1.64" }
 bytes = { version = "= 1.4.0" }
@@ -25,13 +25,18 @@ regex = { version = "= 1.7.1" }
 reqwest = { version = "= 0.11.14", default-features = false, features = [
     "rustls-tls",
 ] }
+rustls = { version = "= 0.20.8", features = ["tls12"] }
+rustls-pemfile = { version = "= 1.0.2" }
 serde = { version = "= 1.0.152", features = ["derive"] }
 serde_yaml = { version = "= 0.9.17" }
 sqlx = { version = "= 0.6.2", features = ["runtime-tokio-rustls", "sqlite"] }
 tokio = { version = "= 1.25.0", features = ["fs", "macros", "rt-multi-thread"] }
 trust-dns-client = { version = "= 0.22.0" }
-trust-dns-resolver = { version = "= 0.22.0", features = ["tokio-runtime"] }
-trust-dns-server = { version = "= 0.22.0" }
+trust-dns-resolver = { version = "= 0.22.0", features = [
+    "dns-over-rustls",
+    "tokio-runtime",
+] }
+trust-dns-server = { version = "= 0.22.0", features = ["dns-over-rustls"] }
 
 [build-dependencies]
 anyhow = { version = "= 1.0.69" }
@@ -41,6 +46,6 @@ vergen = { version = "= 7.5.0" }
 assets = [
     { source = "config.yml", dest = "/etc/rhole/config.yml", mode = "755", config = true },
     { source = "dist/*", dest = "/etc/rhole/web", mode = "600" },
-    { source = "target/x86_64-unknown-linux-musl/release/rhole", dest = "/usr/bin/rhole", mode = "755" },
     { source = "rhole.service", dest = "/etc/systemd/system/rhole.service", mode = "755" },
+    { source = "target/x86_64-unknown-linux-musl/release/rhole", dest = "/usr/bin/rhole", mode = "755" },
 ]

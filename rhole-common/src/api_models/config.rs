@@ -10,10 +10,17 @@ use std::{
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ServerConfig {
     pub database_path: PathBuf,
+    pub tls: TlsConfig,
     pub web_resources: WebResources,
     pub net: NetConfig,
     pub proxy_server: ProxyServer,
     pub sources: Sources,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct TlsConfig {
+    pub certificate_path: PathBuf,
+    pub pkey_path: PathBuf,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -26,6 +33,7 @@ pub struct WebResources {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct NetConfig {
     pub dns: NetDnsConfig,
+    pub dot: NetDotConfig,
     pub web_interface: NetWebInterfaceConfig,
 }
 
@@ -36,6 +44,13 @@ pub struct NetDnsConfig {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct NetDotConfig {
+    pub listen_addr: String,
+    pub listen_port: u16,
+    pub timeout: u64,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct NetWebInterfaceConfig {
     pub listen_addr: String,
     pub listen_port: u16,
@@ -43,8 +58,9 @@ pub struct NetWebInterfaceConfig {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ProxyServer {
-    pub addr: String,
+    pub ip: String,
     pub port: u16,
+    pub tls_dns_name: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -87,7 +103,7 @@ impl TryInto<SocketAddr> for ProxyServer {
 
     fn try_into(self) -> Result<SocketAddr, Self::Error> {
         Ok(SocketAddr::V4(SocketAddrV4::new(
-            Ipv4Addr::from_str(&self.addr)?,
+            Ipv4Addr::from_str(&self.ip)?,
             self.port,
         )))
     }

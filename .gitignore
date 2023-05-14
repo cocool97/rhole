@@ -4,3 +4,5 @@ hosts.txt
 dev-config.yml
 dev-hosts.txt
 rhole.db*
+keys
+rhole.docker

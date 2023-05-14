@@ -2,7 +2,7 @@ use anyhow::Result;
 use common::ProxyServer;
 use trust_dns_client::op::{MessageType, ResponseCode};
 use trust_dns_resolver::{
-    config::{NameServerConfig, Protocol, ResolverConfig, ResolverOpts},
+    config::{NameServerConfig, ResolverConfig, ResolverOpts},
     name_server::{GenericConnection, GenericConnectionProvider, TokioRuntime},
     AsyncResolver,
 };
@@ -25,8 +25,23 @@ impl RequestsController {
         proxy: ProxyServer,
         blacklist_controller: BlacklistController,
     ) -> Result<Self> {
-        let mut resolver_config = ResolverConfig::default();
-        resolver_config.add_name_server(NameServerConfig::new(proxy.try_into()?, Protocol::Udp));
+        let name_server_config = NameServerConfig {
+            socket_addr: std::net::SocketAddr::new(
+                std::net::IpAddr::V4(proxy.ip.parse()?),
+                proxy.port,
+            ),
+            protocol: trust_dns_resolver::config::Protocol::Tls,
+            tls_dns_name: Some(proxy.tls_dns_name.clone()),
+            trust_nx_responses: true,
+            tls_config: None,
+            bind_addr: None,
+        };
+
+        let mut resolver_config = ResolverConfig::new();
+        resolver_config.add_name_server(name_server_config);
+
+        let resolver_config = ResolverConfig::cloudflare_tls();
+
         let resolver = AsyncResolver::tokio(resolver_config, ResolverOpts::default())?;
 
         Ok(Self {

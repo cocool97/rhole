@@ -1,13 +1,15 @@
-database:
-  internal: "rhole.db"
-  stats: "rhole-stats.db"
+database_path: /etc/rhole/data/rhole.db
+tls:
+  certificate_path: /etc/rhole/ssl/crt.pem
+  pkey_path: /etc/rhole/ssl/key.pem
 web_resources:
   static_files: "/etc/rhole/web"
   index_file: "index.html"
   mount_path: "/"
-proxy_server: 
-  addr: "8.8.8.8"
-  port: 53
+proxy_server:
+  ip: "1.1.1.1"
+  port: 853
+  tls_dns_name: cloudflare-dns.com
 sources:
   update_interval: 5
   entries:
@@ -21,6 +23,10 @@ net:
   dns:
     listen_addr: "0.0.0.0"
     listen_port: 53
+  dot:
+    listen_addr: "0.0.0.0"
+    listen_port: 853
+    timeout: 2
   web_interface:
     listen_addr: "0.0.0.0"
-    listen_port: 80
+    listen_port: 443

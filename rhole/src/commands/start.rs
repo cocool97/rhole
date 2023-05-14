@@ -1,4 +1,8 @@
-use std::{path::PathBuf, time::SystemTime};
+use std::{
+    io::BufReader,
+    path::PathBuf,
+    time::{Duration, SystemTime},
+};
 
 use actix_files::{Files, NamedFile};
 use actix_web::{
@@ -6,9 +10,14 @@ use actix_web::{
     web::{self, Data},
     App, HttpServer,
 };
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use common::ServerConfig;
-use tokio::{fs::File, net::UdpSocket};
+use rustls::{Certificate, PrivateKey};
+use rustls_pemfile::{certs, pkcs8_private_keys};
+use tokio::{
+    fs::File,
+    net::{TcpListener, UdpSocket},
+};
 use trust_dns_server::ServerFuture;
 
 use crate::{
@@ -42,10 +51,33 @@ pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
     ))
     .await?;
 
+    let tcp_listener = TcpListener::bind((
+        config.net.dot.listen_addr.as_str(),
+        config.net.dot.listen_port,
+    ))
+    .await?;
+
+    let cert_file = File::open(&config.tls.certificate_path).await?;
+    let key_file = File::open(&config.tls.pkey_path).await?;
+
+    let cert_file = &mut BufReader::new(cert_file.into_std().await);
+    let key_file = &mut BufReader::new(key_file.into_std().await);
+
+    let cert_chain: Vec<Certificate> = certs(cert_file)?.into_iter().map(Certificate).collect();
+    let key = pkcs8_private_keys(key_file)?
+        .first()
+        .ok_or(anyhow!("No key found..."))?
+        .to_owned();
+
     let mut server = ServerFuture::new(
         RequestsController::new(config.proxy_server.clone(), blacklist_controller).await?,
     );
     server.register_socket(dns_socket);
+    server.register_tls_listener(
+        tcp_listener,
+        Duration::from_secs(config.net.dot.timeout),
+        (cert_chain.to_vec(), PrivateKey(key.clone())),
+    )?;
 
     tokio::spawn(async { server.block_until_done().await });
 
@@ -90,12 +122,27 @@ pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
                 })
             })
     })
-    .bind((
-        config.net.web_interface.listen_addr.as_str(),
-        config.net.web_interface.listen_port,
-    ))?
+    .bind_rustls(
+        (
+            config.net.web_interface.listen_addr.as_str(),
+            config.net.web_interface.listen_port,
+        ),
+        tls_config(&cert_chain, &key).await?,
+    )?
     .run()
     .await?;
 
     Ok(())
+}
+
+async fn tls_config(cert_chain: &[Certificate], key: &[u8]) -> Result<rustls::ServerConfig> {
+    let mut config = rustls::ServerConfig::builder()
+        .with_safe_defaults()
+        .with_no_client_auth()
+        .with_single_cert(cert_chain.to_vec(), PrivateKey(key.to_vec()))?;
+
+    config.alpn_protocols.push(b"http/1.1".to_vec());
+    config.alpn_protocols.push(b"h2".to_vec());
+
+    Ok(config)
 }
