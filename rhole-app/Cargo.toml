@@ -7,7 +7,7 @@ repository.workspace = true
 version.workspace = true
 
 [dependencies]
-anyhow = { version = "= 1.0.69" }
+anyhow = { version = "= 1.0.71" }
 chrono = { version = "= 0.4.23" }
 common = { path = "../rhole-common" }
 gloo = { version = "= 0.8.0" }

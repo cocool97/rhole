@@ -6,4 +6,4 @@ RUN mkdir /etc/rhole/web
 COPY dist/* /etc/rhole/web
 COPY target/x86_64-unknown-linux-musl/release/rhole /usr/bin/rhole
 
-ENTRYPOINT ["/usr/bin/rhole", "start", "--config", "/etc/rhole/config.yml"]
+CMD ["/usr/bin/rhole", "start", "--config", "/etc/rhole/config.yml"]

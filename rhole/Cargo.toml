@@ -12,10 +12,10 @@ version.workspace = true
 [dependencies]
 actix-files = { version = "0.6.2" }
 actix-web = { version = "4.2.1", features = ["rustls"]}
-anyhow = { version = "= 1.0.69" }
+anyhow = { version = "= 1.0.71" }
 async-trait = { version = "= 0.1.64" }
 bytes = { version = "= 1.4.0" }
-clap = { version = "= 4.1.4", features = ["derive"] }
+clap = { version = "= 4.2.7", features = ["derive"] }
 common = { path = "../rhole-common" }
 env_logger = { version = "= 0.10.0" }
 futures = { version = "0.3.25" }
@@ -27,7 +27,7 @@ reqwest = { version = "= 0.11.14", default-features = false, features = [
 ] }
 rustls = { version = "= 0.20.8", features = ["tls12"] }
 rustls-pemfile = { version = "= 1.0.2" }
-serde = { version = "= 1.0.152", features = ["derive"] }
+serde = { version = "= 1.0.163", features = ["derive"] }
 serde_yaml = { version = "= 0.9.17" }
 sqlx = { version = "= 0.6.2", features = ["runtime-tokio-rustls", "sqlite"] }
 tokio = { version = "= 1.25.0", features = ["fs", "macros", "rt-multi-thread"] }
@@ -39,7 +39,7 @@ trust-dns-resolver = { version = "= 0.22.0", features = [
 trust-dns-server = { version = "= 0.22.0", features = ["dns-over-rustls"] }
 
 [build-dependencies]
-anyhow = { version = "= 1.0.69" }
+anyhow = { version = "= 1.0.71" }
 vergen = { version = "= 7.5.0" }
 
 [package.metadata.generate-rpm]
