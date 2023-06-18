@@ -6,6 +6,8 @@ web_resources:
   static_files: "dist"
   index_file: "index.html"
   mount_path: "/"
+local_hosts:
+  test.lan.: "192.168.0.10"
 proxy_server:
   ip: "1.1.1.1"
   port: 853

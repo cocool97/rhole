@@ -1,6 +1,7 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::{
+    collections::HashMap,
     fmt::Display,
     net::{AddrParseError, Ipv4Addr, SocketAddr, SocketAddrV4},
     path::PathBuf,
@@ -12,6 +13,8 @@ pub struct ServerConfig {
     pub database_path: PathBuf,
     pub tls: TlsConfig,
     pub web_resources: WebResources,
+    #[serde(default)]
+    pub local_hosts: HashMap<String, Ipv4Addr>,
     pub net: NetConfig,
     pub proxy_server: ProxyServer,
     pub sources: Sources,

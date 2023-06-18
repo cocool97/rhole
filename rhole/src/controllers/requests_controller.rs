@@ -1,10 +1,16 @@
+use std::{collections::HashMap, net::Ipv4Addr, str::FromStr};
+
 use anyhow::Result;
 use common::ProxyServer;
-use trust_dns_client::op::{MessageType, ResponseCode};
+use trust_dns_client::{
+    op::{MessageType, Query, ResponseCode},
+    rr::{DNSClass, RData, RecordType},
+};
 use trust_dns_resolver::{
     config::{NameServerConfig, ResolverConfig, ResolverOpts},
+    lookup::Lookup,
     name_server::{GenericConnection, GenericConnectionProvider, TokioRuntime},
-    AsyncResolver,
+    AsyncResolver, Hosts, Name,
 };
 use trust_dns_server::{
     authority::MessageResponseBuilder,
@@ -15,6 +21,34 @@ use crate::models::dns_default_response;
 
 use super::BlacklistController;
 
+pub fn get_static_hosts(local_hosts: &HashMap<String, Ipv4Addr>) -> Option<Hosts> {
+    let mut hosts = Hosts::new();
+    let mut nb: u8 = 0;
+    for (host, addr) in local_hosts {
+        let name = match Name::from_str(host) {
+            Ok(name) => name,
+            Err(e) => {
+                log::error!("Error: {e}");
+                continue;
+            }
+        };
+
+        let mut q = Query::new();
+        q.set_name(name.clone());
+        q.set_query_class(DNSClass::IN);
+        q.set_query_type(RecordType::A);
+
+        hosts.insert(name, RecordType::A, Lookup::from_rdata(q, RData::A(*addr)));
+
+        log::debug!("Adds static-host {host}: {addr}");
+        nb += 1;
+    }
+
+    log::info!("Found {} static hosts...", nb);
+
+    Some(hosts)
+}
+
 pub struct RequestsController {
     resolver: AsyncResolver<GenericConnection, GenericConnectionProvider<TokioRuntime>>,
     blacklist_controller: BlacklistController,
@@ -24,6 +58,7 @@ impl RequestsController {
     pub async fn new(
         proxy: ProxyServer,
         blacklist_controller: BlacklistController,
+        local_hosts: &HashMap<String, Ipv4Addr>,
     ) -> Result<Self> {
         let name_server_config = NameServerConfig {
             socket_addr: std::net::SocketAddr::new(
@@ -40,9 +75,10 @@ impl RequestsController {
         let mut resolver_config = ResolverConfig::new();
         resolver_config.add_name_server(name_server_config);
 
-        let resolver_config = ResolverConfig::cloudflare_tls();
+        let mut resolver = AsyncResolver::tokio(resolver_config, ResolverOpts::default())?;
 
-        let resolver = AsyncResolver::tokio(resolver_config, ResolverOpts::default())?;
+        // Sets static hosts resolver
+        resolver.set_hosts(get_static_hosts(local_hosts));
 
         Ok(Self {
             resolver,
@@ -57,7 +93,6 @@ impl RequestsController {
     ) -> Result<ResponseInfo> {
         let query = request.query();
         let query_question = query.name().to_string();
-        let query_type = query.query_type();
 
         // TODO: Treat all questions !
         // TODO: Check trailing dots
@@ -89,9 +124,9 @@ impl RequestsController {
             rev_address.push('.');
         }
 
-        let response = self.resolver.lookup(query.name(), query_type).await?;
-
+        let response = self.resolver.lookup_ip(query.name().to_string()).await?;
         let response_builder = MessageResponseBuilder::from_message_request(request);
+        let response = response.as_lookup();
         let mut response = response_builder.build(
             *request.header(),
             response.records(),

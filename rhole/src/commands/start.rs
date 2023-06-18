@@ -32,7 +32,10 @@ pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
 
     utils::set_log_level(debug);
 
-    log::info!("Starting rhole server...");
+    log::info!(
+        "Starting rhole server version {}...",
+        env!("CARGO_PKG_VERSION")
+    );
 
     let f = File::open(&config_path).await?;
     let config: ServerConfig = serde_yaml::from_reader(f.into_std().await)?;
@@ -70,7 +73,12 @@ pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
         .to_owned();
 
     let mut server = ServerFuture::new(
-        RequestsController::new(config.proxy_server.clone(), blacklist_controller).await?,
+        RequestsController::new(
+            config.proxy_server.clone(),
+            blacklist_controller,
+            &config.local_hosts,
+        )
+        .await?,
     );
     server.register_socket(dns_socket);
     server.register_tls_listener(
