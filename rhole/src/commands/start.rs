@@ -4,14 +4,18 @@ use std::{
     time::{Duration, SystemTime},
 };
 
+use crate::api_models::ServerConfig;
+use actix_cors::Cors;
 use actix_files::{Files, NamedFile};
 use actix_web::{
     dev::{fn_service, ServiceRequest, ServiceResponse},
+    guard,
     web::{self, Data},
-    App, HttpServer,
+    App, HttpResponse, HttpServer,
 };
 use anyhow::{anyhow, Result};
-use common::ServerConfig;
+use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema};
+use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use rustls::{Certificate, PrivateKey};
 use rustls_pemfile::{certs, pkcs8_private_keys};
 use tokio::{
@@ -21,13 +25,18 @@ use tokio::{
 use trust_dns_server::ServerFuture;
 
 use crate::{
-    api::handlers::{api_route_not_found, blocked_domains, blocked_requests, clients, infos},
     controllers::{BlacklistController, DatabaseController, RequestsController},
+    graphql::RholeQueries,
     models::AppData,
     utils,
 };
 
-pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
+pub async fn start(
+    debug: bool,
+    config_path: PathBuf,
+    no_update_config: bool,
+    http: bool,
+) -> Result<()> {
     let start_time = SystemTime::now();
 
     utils::set_log_level(debug);
@@ -42,11 +51,16 @@ pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
 
     let database_controller = DatabaseController::init_database(&config.database_path).await?;
 
-    let blacklist_controller = BlacklistController::init_from_sources(
-        &config.sources.entries,
-        database_controller.clone(),
-    )
-    .await?;
+    let blacklist_controller = match no_update_config {
+        true => BlacklistController::new(database_controller.clone()),
+        false => {
+            BlacklistController::init_from_sources(
+                &config.sources.entries,
+                database_controller.clone(),
+            )
+            .await?
+        }
+    };
 
     let dns_socket = UdpSocket::bind((
         config.net.dns.listen_addr.as_str(),
@@ -89,23 +103,35 @@ pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
 
     tokio::spawn(async { server.block_until_done().await });
 
-    let app_data = Data::new(AppData {
+    let app_data = AppData {
         config: config.clone(),
-        database_controller,
+        database_controller: database_controller.clone(),
         start_time,
-    });
+    };
 
-    HttpServer::new(move || {
+    let graphql_schema = Schema::build(RholeQueries::default(), EmptyMutation, EmptySubscription)
+        .data(app_data)
+        .finish();
+
+    let server = HttpServer::new(move || {
+        let cors = Cors::default()
+            .allow_any_origin()
+            .allow_any_header()
+            .allow_any_method()
+            // .allowed_origin("http://localhost:3000")
+            // .allowed_methods(vec!["GET", "POST"])
+            // .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
+            // .allowed_header(http::header::CONTENT_TYPE)
+            .max_age(3600);
+
         App::new()
-            .app_data(Data::clone(&app_data))
+            .wrap(cors)
+            .app_data(Data::new(graphql_schema.clone()))
+            .service(web::resource("/").guard(guard::Post()).to(index))
             .service(
-                web::scope("/api")
-                    .route("/blocked", web::get().to(blocked_requests))
-                    .route("/clients", web::get().to(clients))
-                    .route("/infos", web::get().to(infos))
-                    .route("/config", web::get().to(crate::api::handlers::config))
-                    .route("/blocked_domains", web::get().to(blocked_domains))
-                    .default_service(web::route().to(api_route_not_found)),
+                web::resource("/graphql")
+                    .guard(guard::Get())
+                    .to(index_graphiql),
             )
             .default_service({
                 let index_file = config.web_resources.index_file.clone();
@@ -122,25 +148,47 @@ pub async fn start(debug: bool, config_path: PathBuf) -> Result<()> {
                         let static_files = static_files.clone();
                         async move {
                             let (req, _) = req.into_parts();
-                            let file = NamedFile::open_async(static_files.join(index_file)).await?;
+                            let file =
+                                NamedFile::open_async(PathBuf::from(static_files).join(index_file))
+                                    .await?;
                             let res = file.into_response(&req);
                             Ok(ServiceResponse::new(req, res))
                         }
                     })
                 })
             })
-    })
-    .bind_rustls(
-        (
-            config.net.web_interface.listen_addr.as_str(),
-            config.net.web_interface.listen_port,
-        ),
-        tls_config(&cert_chain, &key).await?,
-    )?
-    .run()
-    .await?;
+    });
+
+    let listen_addr = (
+        config.net.web_interface.listen_addr.as_str(),
+        config.net.web_interface.listen_port,
+    );
+    match http {
+        true => {
+            server.bind(listen_addr)?.run().await?;
+        }
+        false => {
+            server
+                .bind_rustls(listen_addr, tls_config(&cert_chain, &key).await?)?
+                .run()
+                .await?;
+        }
+    }
 
     Ok(())
+}
+
+async fn index(
+    schema: web::Data<Schema<RholeQueries, EmptyMutation, EmptySubscription>>,
+    req: GraphQLRequest,
+) -> GraphQLResponse {
+    schema.execute(req.into_inner()).await.into()
+}
+
+async fn index_graphiql() -> HttpResponse {
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(GraphiQLSource::build().endpoint("/").finish())
 }
 
 async fn tls_config(cert_chain: &[Certificate], key: &[u8]) -> Result<rustls::ServerConfig> {

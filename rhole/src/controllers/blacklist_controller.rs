@@ -1,7 +1,7 @@
 use std::{convert::TryFrom, net::IpAddr};
 
+use crate::api_models::{SourceEntry, SourceType};
 use anyhow::{anyhow, Result};
-use common::{SourceEntry, SourceType};
 use regex::RegexBuilder;
 use reqwest::Url;
 use sqlx::sqlite::SqliteQueryResult;
@@ -15,6 +15,10 @@ pub struct BlacklistController {
 }
 
 impl BlacklistController {
+    pub fn new(db_controller: DatabaseController) -> Self {
+        Self { db_controller }
+    }
+
     pub async fn init_from_sources(
         sources: &[SourceEntry],
         db_controller: DatabaseController,

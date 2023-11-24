@@ -1,7 +1,6 @@
 use std::{collections::HashMap, net::Ipv4Addr, str::FromStr};
 
 use anyhow::Result;
-use common::ProxyServer;
 use trust_dns_client::{
     op::{MessageType, Query, ResponseCode},
     rr::{DNSClass, RData, RecordType},
@@ -17,7 +16,7 @@ use trust_dns_server::{
     server::{Request, RequestHandler, ResponseHandler, ResponseInfo},
 };
 
-use crate::models::dns_default_response;
+use crate::{api_models::ProxyServer, models::dns_default_response};
 
 use super::BlacklistController;
 
