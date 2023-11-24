@@ -23,12 +23,12 @@ sources:
     # comment: Remote hosts file
 net:
   dns:
-    listen_addr: "0.0.0.0"
+    listen_addr: "localhost"
     listen_port: 5053
   dot:
-    listen_addr: "0.0.0.0"
+    listen_addr: "localhost"
     listen_port: 8053
     timeout: 2
   web_interface:
-    listen_addr: "0.0.0.0"
+    listen_addr: "localhost"
     listen_port: 40443

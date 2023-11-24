@@ -1,8 +1,9 @@
 #![forbid(unsafe_code)]
 
-mod api;
+mod api_models;
 mod commands;
 mod controllers;
+mod graphql;
 mod models;
 mod utils;
 
@@ -17,7 +18,12 @@ async fn main() -> Result<()> {
     let opts = Opts::parse();
 
     match opts.command {
-        RholeCommand::Start { debug, config_path } => commands::start(debug, config_path).await?,
+        RholeCommand::Start {
+            debug,
+            config_path,
+            no_update_db,
+            http,
+        } => commands::start(debug, config_path, no_update_db, http).await?,
         RholeCommand::Info => commands::info(),
     }
 

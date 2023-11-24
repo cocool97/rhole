@@ -1,7 +1,7 @@
 pub fn info() {
     println!("-- Build --");
     println!("Build Timestamp:\t{}", env!("VERGEN_BUILD_TIMESTAMP"));
-    println!("Build Version:\t\t{}\n", env!("VERGEN_BUILD_SEMVER"));
+    println!("Build Version:\t\t{}\n", env!("CARGO_PKG_VERSION"));
 
     println!("-- GIT --");
     println!("Commit SHA:\t\t{}", env!("VERGEN_GIT_SHA"));
@@ -19,7 +19,7 @@ pub fn info() {
         "cargo Target Triple:\t{}",
         env!("VERGEN_CARGO_TARGET_TRIPLE")
     );
-    println!("cargo Profile:\t\t{}", env!("VERGEN_CARGO_PROFILE"));
+    println!("cargo debug:\t\t{}", env!("VERGEN_CARGO_DEBUG"));
     println!("cargo features:\t\t{}\n", env!("VERGEN_CARGO_FEATURES"));
 
     println!("-- Build System Informations --");

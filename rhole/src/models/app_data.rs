@@ -1,5 +1,5 @@
+use crate::api_models::ServerConfig;
 use crate::controllers::DatabaseController;
-use common::ServerConfig;
 use std::time::SystemTime;
 
 pub struct AppData {

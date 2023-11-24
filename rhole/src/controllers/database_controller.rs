@@ -1,5 +1,4 @@
 use anyhow::Result;
-use common::{BlockedDomain, BlockedRequest, Client};
 use futures::TryStreamExt;
 use sqlx::{
     sqlite::{
@@ -13,6 +12,8 @@ use std::{
     path::Path,
     time::{SystemTime, UNIX_EPOCH},
 };
+
+use crate::api_models::{BlockedDomain, BlockedRequest, Client};
 
 #[derive(Clone)]
 pub struct DatabaseController {
