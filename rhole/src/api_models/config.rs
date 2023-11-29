@@ -12,7 +12,7 @@ use std::{
 pub struct ServerConfig {
     pub database_path: String,
     pub tls: TlsConfig,
-    pub web_resources: WebResources,
+    pub html_dir: String,
     #[serde(default)]
     pub local_hosts: HashMap<String, Ipv4Addr>,
     pub net: NetConfig,
@@ -24,13 +24,6 @@ pub struct ServerConfig {
 pub struct TlsConfig {
     pub certificate_path: String,
     pub pkey_path: String,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone, SimpleObject)]
-pub struct WebResources {
-    pub static_files: String,
-    pub mount_path: String,
-    pub index_file: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, SimpleObject)]

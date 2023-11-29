@@ -1,17 +1,17 @@
 use std::{collections::HashMap, net::Ipv4Addr, str::FromStr};
 
 use anyhow::Result;
-use trust_dns_client::{
+use hickory_client::{
     op::{MessageType, Query, ResponseCode},
     rr::{DNSClass, RData, RecordType},
 };
-use trust_dns_resolver::{
+use hickory_resolver::{
     config::{NameServerConfig, ResolverConfig, ResolverOpts},
     lookup::Lookup,
-    name_server::{GenericConnection, GenericConnectionProvider, TokioRuntime},
+    name_server::{GenericConnector, TokioRuntimeProvider},
     AsyncResolver, Hosts, Name,
 };
-use trust_dns_server::{
+use hickory_server::{
     authority::MessageResponseBuilder,
     server::{Request, RequestHandler, ResponseHandler, ResponseInfo},
 };
@@ -37,7 +37,11 @@ pub fn get_static_hosts(local_hosts: &HashMap<String, Ipv4Addr>) -> Option<Hosts
         q.set_query_class(DNSClass::IN);
         q.set_query_type(RecordType::A);
 
-        hosts.insert(name, RecordType::A, Lookup::from_rdata(q, RData::A(*addr)));
+        hosts.insert(
+            name,
+            RecordType::A,
+            Lookup::from_rdata(q, RData::A(hickory_client::rr::rdata::A(*addr))),
+        );
 
         log::debug!("Adds static-host {host}: {addr}");
         nb += 1;
@@ -49,7 +53,7 @@ pub fn get_static_hosts(local_hosts: &HashMap<String, Ipv4Addr>) -> Option<Hosts
 }
 
 pub struct RequestsController {
-    resolver: AsyncResolver<GenericConnection, GenericConnectionProvider<TokioRuntime>>,
+    resolver: AsyncResolver<GenericConnector<TokioRuntimeProvider>>,
     blacklist_controller: BlacklistController,
 }
 
@@ -64,9 +68,9 @@ impl RequestsController {
                 std::net::IpAddr::V4(proxy.ip.parse()?),
                 proxy.port,
             ),
-            protocol: trust_dns_resolver::config::Protocol::Tls,
+            protocol: hickory_resolver::config::Protocol::Tls,
             tls_dns_name: Some(proxy.tls_dns_name.clone()),
-            trust_nx_responses: true,
+            trust_negative_responses: true,
             tls_config: None,
             bind_addr: None,
         };
@@ -74,7 +78,7 @@ impl RequestsController {
         let mut resolver_config = ResolverConfig::new();
         resolver_config.add_name_server(name_server_config);
 
-        let mut resolver = AsyncResolver::tokio(resolver_config, ResolverOpts::default())?;
+        let mut resolver = AsyncResolver::tokio(resolver_config, ResolverOpts::default());
 
         // Sets static hosts resolver
         resolver.set_hosts(get_static_hosts(local_hosts));

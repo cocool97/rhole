@@ -1,33 +1,33 @@
 use std::{
     io::BufReader,
+    net::SocketAddr,
     path::PathBuf,
+    sync::Arc,
     time::{Duration, SystemTime},
 };
 
-use crate::api_models::ServerConfig;
-use actix_cors::Cors;
-use actix_files::{Files, NamedFile};
-use actix_web::{
-    dev::{fn_service, ServiceRequest, ServiceResponse},
-    guard,
-    web::{self, Data},
-    App, HttpResponse, HttpServer,
+use crate::{
+    api_models::ServerConfig,
+    handlers::{graphiql_playground, graphql},
+    models::{GraphQLState, RouterState},
 };
 use anyhow::{anyhow, Result};
-use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema};
-use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
+use async_graphql::{EmptyMutation, EmptySubscription, Schema};
+use axum::routing::get;
+use axum_server::tls_rustls::RustlsConfig;
+use hickory_server::ServerFuture;
 use rustls::{Certificate, PrivateKey};
 use rustls_pemfile::{certs, pkcs8_private_keys};
 use tokio::{
     fs::File,
     net::{TcpListener, UdpSocket},
 };
-use trust_dns_server::ServerFuture;
+use tower_http::services::ServeDir;
 
 use crate::{
     controllers::{BlacklistController, DatabaseController, RequestsController},
     graphql::RholeQueries,
-    models::AppData,
+    models::RouterData,
     utils,
 };
 
@@ -101,76 +101,44 @@ pub async fn start(
         (cert_chain.to_vec(), PrivateKey(key.clone())),
     )?;
 
-    tokio::spawn(async { server.block_until_done().await });
+    tokio::spawn(async move { server.block_until_done().await });
 
-    let app_data = AppData {
-        config: config.clone(),
-        database_controller: database_controller.clone(),
+    let graphql_state = GraphQLState {
         start_time,
+        config: config.clone(),
+        database_controller,
     };
 
     let graphql_schema = Schema::build(RholeQueries::default(), EmptyMutation, EmptySubscription)
-        .data(app_data)
+        .data(graphql_state)
         .finish();
 
-    let server = HttpServer::new(move || {
-        let cors = Cors::default()
-            .allow_any_origin()
-            .allow_any_header()
-            .allow_any_method()
-            // .allowed_origin("http://localhost:3000")
-            // .allowed_methods(vec!["GET", "POST"])
-            // .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
-            // .allowed_header(http::header::CONTENT_TYPE)
-            .max_age(3600);
+    let router_state = RouterState {
+        router_data: Arc::new(RouterData { graphql_schema }),
+    };
 
-        App::new()
-            .wrap(cors)
-            .app_data(Data::new(graphql_schema.clone()))
-            .service(web::resource("/").guard(guard::Post()).to(index))
-            .service(
-                web::resource("/graphql")
-                    .guard(guard::Get())
-                    .to(index_graphiql),
-            )
-            .default_service({
-                let index_file = config.web_resources.index_file.clone();
-                let static_files = config.web_resources.static_files.clone();
+    let router = axum::Router::new()
+        .route("/graphql", get(graphiql_playground).post(graphql))
+        .route_service("/", ServeDir::new(config.html_dir))
+        .route("/echo", get(|| async { env!("CARGO_PKG_VERSION") }))
+        .with_state(router_state);
 
-                Files::new(
-                    &config.web_resources.mount_path,
-                    &config.web_resources.static_files,
-                )
-                .index_file(&config.web_resources.index_file)
-                .default_handler({
-                    fn_service(move |req: ServiceRequest| {
-                        let index_file = index_file.clone();
-                        let static_files = static_files.clone();
-                        async move {
-                            let (req, _) = req.into_parts();
-                            let file =
-                                NamedFile::open_async(PathBuf::from(static_files).join(index_file))
-                                    .await?;
-                            let res = file.into_response(&req);
-                            Ok(ServiceResponse::new(req, res))
-                        }
-                    })
-                })
-            })
-    });
-
-    let listen_addr = (
+    let listen_addr: SocketAddr = format!(
+        "{}:{}",
         config.net.web_interface.listen_addr.as_str(),
-        config.net.web_interface.listen_port,
-    );
+        config.net.web_interface.listen_port.to_string().as_str(),
+    )
+    .parse()?;
+
     match http {
         true => {
-            server.bind(listen_addr)?.run().await?;
+            axum_server::bind(listen_addr)
+                .serve(router.into_make_service())
+                .await?;
         }
         false => {
-            server
-                .bind_rustls(listen_addr, tls_config(&cert_chain, &key).await?)?
-                .run()
+            axum_server::bind_rustls(listen_addr, tls_config(&cert_chain, &key).await?)
+                .serve(router.into_make_service())
                 .await?;
         }
     }
@@ -178,20 +146,7 @@ pub async fn start(
     Ok(())
 }
 
-async fn index(
-    schema: web::Data<Schema<RholeQueries, EmptyMutation, EmptySubscription>>,
-    req: GraphQLRequest,
-) -> GraphQLResponse {
-    schema.execute(req.into_inner()).await.into()
-}
-
-async fn index_graphiql() -> HttpResponse {
-    HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(GraphiQLSource::build().endpoint("/").finish())
-}
-
-async fn tls_config(cert_chain: &[Certificate], key: &[u8]) -> Result<rustls::ServerConfig> {
+async fn tls_config(cert_chain: &[Certificate], key: &[u8]) -> Result<RustlsConfig> {
     let mut config = rustls::ServerConfig::builder()
         .with_safe_defaults()
         .with_no_client_auth()
@@ -200,5 +155,5 @@ async fn tls_config(cert_chain: &[Certificate], key: &[u8]) -> Result<rustls::Se
     config.alpn_protocols.push(b"http/1.1".to_vec());
     config.alpn_protocols.push(b"h2".to_vec());
 
-    Ok(config)
+    Ok(RustlsConfig::from_config(Arc::new(config)))
 }

@@ -5,7 +5,7 @@ use sqlx::{
         SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteQueryResult,
         SqliteSynchronous,
     },
-    Connection, Pool, Row, Sqlite,
+    ConnectOptions, Connection, Pool, Row, Sqlite,
 };
 use std::{
     net::IpAddr,
@@ -27,7 +27,8 @@ impl DatabaseController {
             .filename(database_path)
             .journal_mode(SqliteJournalMode::Wal)
             .synchronous(SqliteSynchronous::Normal)
-            .foreign_keys(true);
+            .foreign_keys(true)
+            .disable_statement_logging();
 
         let pool = SqlitePoolOptions::new()
             .max_connections(5)
@@ -45,7 +46,7 @@ impl DatabaseController {
                     last_seen REAL
                 );"#,
             )
-            .execute(&mut conn)
+            .execute(&mut *conn)
             .await?;
 
             sqlx::query(
@@ -59,7 +60,7 @@ impl DatabaseController {
                     FOREIGN KEY(domain_id) REFERENCES blocked_domains(domain_id) 
                 );"#,
             )
-            .execute(&mut conn)
+            .execute(&mut *conn)
             .await?;
 
             sqlx::query(
@@ -71,7 +72,7 @@ impl DatabaseController {
                     whitelisted INTEGER
                 );"#,
             )
-            .execute(&mut conn)
+            .execute(&mut *conn)
             .await?;
 
             sqlx::query(
@@ -79,7 +80,7 @@ impl DatabaseController {
                 CREATE INDEX IF NOT EXISTS blocked_domains_idx ON blocked_domains(domain_address, whitelisted);
                 "#,
             )
-            .execute(&mut conn)
+            .execute(&mut *conn)
             .await?;
         }
 
@@ -102,7 +103,7 @@ impl DatabaseController {
             .bind(blocked_domain)
             .bind(timestamp)
             .bind(0)
-            .execute(&mut tr)
+            .execute(&mut *tr)
             .await {
                 Ok(_) => entries_added += 1,
                 Err(e) => log::error!("Error when inserting: {e}"),
@@ -122,7 +123,7 @@ impl DatabaseController {
         "#,
         )
         .bind(domain.as_ref())
-        .fetch_one(&mut conn)
+        .fetch_one(&mut *conn)
         .await?;
 
         match row.try_get("domain_id") {
@@ -155,7 +156,7 @@ impl DatabaseController {
         "#,
         )
         .bind(num_entries)
-        .fetch(&mut conn);
+        .fetch(&mut *conn);
 
         let mut res = vec![];
         while let Some(row) = rows.try_next().await? {
@@ -185,7 +186,7 @@ impl DatabaseController {
         "#,
         )
         .bind(num_entries)
-        .fetch(&mut conn);
+        .fetch(&mut *conn);
 
         let mut res = vec![];
         while let Some(row) = rows.try_next().await? {
@@ -208,7 +209,7 @@ impl DatabaseController {
             r#"SELECT * FROM clients ORDER BY last_seen;
         "#,
         )
-        .fetch(&mut conn);
+        .fetch(&mut *conn);
 
         let mut res = vec![];
         while let Some(row) = rows.try_next().await? {
@@ -239,7 +240,7 @@ impl DatabaseController {
         .bind(client_address.to_string())
         .bind(timestamp)
         .bind(timestamp)
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await?)
     }
 
@@ -257,7 +258,7 @@ impl DatabaseController {
         let client_id: i64 =
             sqlx::query(r#"SELECT client_id FROM clients WHERE ip_address = ? LIMIT 1;"#)
                 .bind(client_address.to_string())
-                .fetch_one(&mut conn)
+                .fetch_one(&mut *conn)
                 .await?
                 .try_get("client_id")?;
 
@@ -269,7 +270,7 @@ impl DatabaseController {
         .bind(client_id)
         .bind(domain_id)
         .bind(timestamp)
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await?)
     }
 }

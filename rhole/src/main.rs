@@ -4,6 +4,7 @@ mod api_models;
 mod commands;
 mod controllers;
 mod graphql;
+mod handlers;
 mod models;
 mod utils;
 

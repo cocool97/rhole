@@ -9,7 +9,6 @@ import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import { Link } from 'react-router-dom';
 import RholeDrawer from './RholeDrawer';
-import { DrawerHeader } from './DrawerHeader';
 
 const drawerWidth = 240;
 
@@ -43,7 +42,7 @@ const MainView = (props) => {
     };
 
     return (
-        <Box sx={{ display: 'flex' }}>
+        <Box sx={{ display: 'flex', maxHeight: '100vh', height: '100vh' }}>
             <CssBaseline />
             <AppBar position="fixed" open={open}>
                 <Toolbar>
@@ -70,8 +69,7 @@ const MainView = (props) => {
                 </Toolbar>
             </AppBar>
             <RholeDrawer open={open} handleDrawerClose={handleDrawerClose}/>
-            <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-                <DrawerHeader />
+            <Box component="main" sx={{ flexGrow: 1, p: 3, mt: "64px" }}>
                 {props.children}
             </Box>
         </Box>

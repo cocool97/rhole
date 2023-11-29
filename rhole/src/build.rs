@@ -2,7 +2,7 @@ use anyhow::Result;
 use vergen::EmitBuilder;
 
 fn main() -> Result<()> {
-    Ok(EmitBuilder::builder()
+    EmitBuilder::builder()
         .build_timestamp()
         .git_sha(false)
         .git_branch()
@@ -16,5 +16,5 @@ fn main() -> Result<()> {
         .rustc_host_triple()
         .rustc_channel()
         .rustc_semver()
-        .emit()?)
+        .emit()
 }
