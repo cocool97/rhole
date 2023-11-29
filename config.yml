@@ -2,10 +2,7 @@ database_path: /etc/rhole/data/rhole.db
 tls:
   certificate_path: /etc/rhole/ssl/crt.pem
   pkey_path: /etc/rhole/ssl/key.pem
-web_resources:
-  static_files: "/etc/rhole/web"
-  index_file: "index.html"
-  mount_path: "/"
+html_dir: "index.html"
 proxy_server:
   ip: "1.1.1.1"
   port: 853

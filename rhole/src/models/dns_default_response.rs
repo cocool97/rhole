@@ -1,8 +1,8 @@
-use trust_dns_client::{
+use hickory_client::{
     op::{MessageType, ResponseCode},
     rr::Record,
 };
-use trust_dns_server::{
+use hickory_server::{
     authority::{MessageResponse, MessageResponseBuilder},
     server::Request,
 };

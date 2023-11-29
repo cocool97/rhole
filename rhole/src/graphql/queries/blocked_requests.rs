@@ -1,5 +1,4 @@
-use crate::api_models::BlockedRequest;
-use crate::models::AppData;
+use crate::{api_models::BlockedRequest, models::GraphQLState};
 use anyhow::{anyhow, Result};
 use async_graphql::{Context, Object};
 use log::error;
@@ -10,7 +9,7 @@ pub struct BlockedRequestsQuery;
 #[Object]
 impl BlockedRequestsQuery {
     pub async fn blocked_requests<'ctx>(&self, ctx: &Context<'ctx>) -> Result<Vec<BlockedRequest>> {
-        match ctx.data::<AppData>() {
+        match ctx.data::<GraphQLState>() {
             Ok(app_data) => {
                 app_data
                     .database_controller

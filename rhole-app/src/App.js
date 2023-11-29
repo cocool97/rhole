@@ -12,7 +12,7 @@ import ServerConfig from "./Views/ServerConfig";
 
 const App = () => {
     const apolloClient = new ApolloClient({
-        uri: API_DOMAIN,
+        uri: API_DOMAIN + "/graphql",
         cache: new InMemoryCache(),
         assumeImmutableResults: true
     });
