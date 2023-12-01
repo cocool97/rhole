@@ -1,11 +1,3 @@
-use std::{
-    io::BufReader,
-    net::SocketAddr,
-    path::PathBuf,
-    sync::Arc,
-    time::{Duration, SystemTime},
-};
-
 use crate::{
     api_models::ServerConfig,
     handlers::{graphiql_playground, graphql},
@@ -16,8 +8,17 @@ use async_graphql::{EmptyMutation, EmptySubscription, Schema};
 use axum::routing::get;
 use axum_server::tls_rustls::RustlsConfig;
 use hickory_server::ServerFuture;
+use log::error;
 use rustls::{Certificate, PrivateKey};
 use rustls_pemfile::{certs, pkcs8_private_keys};
+use rustls_pki_types::PrivatePkcs8KeyDer;
+use std::{
+    io::BufReader,
+    net::SocketAddr,
+    path::PathBuf,
+    sync::Arc,
+    time::{Duration, SystemTime},
+};
 use tokio::{
     fs::File,
     net::{TcpListener, UdpSocket},
@@ -80,11 +81,26 @@ pub async fn start(
     let cert_file = &mut BufReader::new(cert_file.into_std().await);
     let key_file = &mut BufReader::new(key_file.into_std().await);
 
-    let cert_chain: Vec<Certificate> = certs(cert_file)?.into_iter().map(Certificate).collect();
-    let key = pkcs8_private_keys(key_file)?
-        .first()
-        .ok_or(anyhow!("No key found..."))?
-        .to_owned();
+    let cert_chain: Vec<Certificate> = certs(cert_file)
+        .filter_map(|v| match v {
+            Ok(cert) => Some(Certificate(cert.to_vec())),
+            Err(e) => {
+                error!("Error loading certificate: {e}");
+                None
+            }
+        })
+        .collect();
+    let keys: Vec<PrivatePkcs8KeyDer<'static>> = pkcs8_private_keys(key_file)
+        .filter_map(|v| match v {
+            Ok(pk) => Some(pk),
+            Err(e) => {
+                error!("Error with private key: {e}");
+                None
+            }
+        })
+        .collect();
+
+    let key = keys.first().ok_or(anyhow!("No key found..."))?.to_owned();
 
     let mut server = ServerFuture::new(
         RequestsController::new(
@@ -98,7 +114,10 @@ pub async fn start(
     server.register_tls_listener(
         tcp_listener,
         Duration::from_secs(config.net.dot.timeout),
-        (cert_chain.to_vec(), PrivateKey(key.clone())),
+        (
+            cert_chain.to_vec(),
+            PrivateKey(key.secret_pkcs8_der().to_vec()),
+        ),
     )?;
 
     tokio::spawn(async move { server.block_until_done().await });
@@ -137,9 +156,12 @@ pub async fn start(
                 .await?;
         }
         false => {
-            axum_server::bind_rustls(listen_addr, tls_config(&cert_chain, &key).await?)
-                .serve(router.into_make_service())
-                .await?;
+            axum_server::bind_rustls(
+                listen_addr,
+                tls_config(&cert_chain, key.secret_pkcs8_der()).await?,
+            )
+            .serve(router.into_make_service())
+            .await?;
         }
     }
 

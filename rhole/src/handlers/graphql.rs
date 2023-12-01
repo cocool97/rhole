@@ -3,7 +3,6 @@ use axum::extract::State;
 
 use crate::models::RouterState;
 
-
 pub async fn graphql(State(state): State<RouterState>, req: GraphQLRequest) -> GraphQLResponse {
     state
         .router_data
