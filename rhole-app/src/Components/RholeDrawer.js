@@ -10,6 +10,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import { useTheme } from "@emotion/react";
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import WatchLaterIcon from '@mui/icons-material/WatchLater';
 import { DrawerHeader } from "./DrawerHeader";
 
 const drawerWidth = 240;
@@ -34,6 +35,11 @@ const drawerItems = [
         "name": "Blocking list",
         "logo": <ChecklistIcon />,
         "redirectTo": "/domains"
+    },
+    {
+        "name": "Real-time traffic",
+        "logo": <WatchLaterIcon />,
+        "redirectTo": "/realtime"
     },
     {
         "name": "Server configuration",
@@ -93,7 +99,7 @@ const RholeDrawer = (props) => {
             <Divider />
             <List>
                 {drawerItems.map((elem) => (
-                    <Link to={elem.redirectTo} title={elem.name} style={{ color: 'inherit', textDecoration: 'inherit' }}>
+                    <Link key={elem.name} to={elem.redirectTo} title={elem.name} style={{ color: 'inherit', textDecoration: 'inherit' }}>
                         <ListItem key={elem.name} disablePadding sx={{ display: 'block' }}>
                             <ListItemButton
                                 sx={{

@@ -1,11 +1,14 @@
 use crate::{
     api_models::ServerConfig,
+    controllers::WatcherController,
+    graphql::RholeSubscriptions,
     handlers::{graphiql_playground, graphql},
     models::{GraphQLState, RouterState},
 };
 use anyhow::{anyhow, Result};
-use async_graphql::{EmptyMutation, EmptySubscription, Schema};
-use axum::routing::get;
+use async_graphql::{EmptyMutation, Schema};
+use async_graphql_axum::GraphQLSubscription;
+use axum::{routing::get, Router};
 use axum_server::tls_rustls::RustlsConfig;
 use hickory_server::ServerFuture;
 use log::error;
@@ -52,12 +55,18 @@ pub async fn start(
 
     let database_controller = DatabaseController::init_database(&config.database_path).await?;
 
+    let blocked_requests_controller = WatcherController::new();
+
     let blacklist_controller = match no_update_config {
-        true => BlacklistController::new(database_controller.clone()),
+        true => BlacklistController::new(
+            database_controller.clone(),
+            blocked_requests_controller.clone(),
+        ),
         false => {
             BlacklistController::init_from_sources(
                 &config.sources.entries,
                 database_controller.clone(),
+                blocked_requests_controller.clone(),
             )
             .await?
         }
@@ -126,20 +135,28 @@ pub async fn start(
         start_time,
         config: config.clone(),
         database_controller,
+        blocked_requests_controller,
     };
 
-    let graphql_schema = Schema::build(RholeQueries::default(), EmptyMutation, EmptySubscription)
-        .data(graphql_state)
-        .finish();
+    let graphql_schema = Schema::build(
+        RholeQueries::default(),
+        EmptyMutation,
+        RholeSubscriptions::default(),
+    )
+    .data(graphql_state)
+    .finish();
 
     let router_state = RouterState {
-        router_data: Arc::new(RouterData { graphql_schema }),
+        router_data: Arc::new(RouterData {
+            graphql_schema: graphql_schema.clone(),
+        }),
     };
 
-    let router = axum::Router::new()
+    let router = Router::new()
         .route("/graphql", get(graphiql_playground).post(graphql))
-        .route_service("/", ServeDir::new(config.html_dir))
+        .route_service("/ws", GraphQLSubscription::new(graphql_schema))
         .route("/echo", get(|| async { env!("CARGO_PKG_VERSION") }))
+        .fallback_service(ServeDir::new(config.html_dir))
         .with_state(router_state);
 
     let listen_addr: SocketAddr = format!(

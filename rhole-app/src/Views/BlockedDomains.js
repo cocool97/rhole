@@ -2,6 +2,7 @@ import React from "react";
 import { useQuery } from "@apollo/client";
 import { DataGrid } from '@mui/x-data-grid';
 import { BLOCKED_DOMAINS_QUERY } from "../queries/blocked_domains";
+import { timestampToDate } from "../utils";
 
 
 const BlockedDomains = () => {
@@ -55,7 +56,7 @@ const BlockedDomains = () => {
                 },
             }}
             loading={loading}
-            rows={data?.blockedDomains || []}
+            rows={data?.blockedDomains.map((x) => ({ ...x, insertTimestamp: timestampToDate(x.insertTimestamp) })) || []}
             getRowId={(row) => row.domainId}
             columns={columns}
             disableRowSelectionOnClick

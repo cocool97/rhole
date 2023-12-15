@@ -8,3 +8,12 @@ export const BLOCKED_REQUESTS_QUERY = gql`query {
     timestamp
   }
 }`;
+
+export const BLOCKED_REQUESTS_SUBSCRIPTION = gql`subscription {
+  blockedRequests {
+    requestId
+    clientId
+    requestAddress
+    timestamp
+  }
+}`;

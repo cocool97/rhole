@@ -68,8 +68,8 @@ const MainView = (props) => {
                     </Typography>
                 </Toolbar>
             </AppBar>
-            <RholeDrawer open={open} handleDrawerClose={handleDrawerClose}/>
-            <Box component="main" sx={{ flexGrow: 1, p: 3, mt: "64px" }}>
+            <RholeDrawer open={open} handleDrawerClose={handleDrawerClose} />
+            <Box component="main" sx={{ flexGrow: 1, p: 3, mt: "64px", "& > *": { height: "100%" } }}>
                 {props.children}
             </Box>
         </Box>

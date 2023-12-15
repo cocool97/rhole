@@ -39,10 +39,17 @@ rustls-pemfile = { version = "2.0.0" }
 rustls-pki-types = { version = "1.0.0" }
 serde = { version = "1.0.163", features = ["derive"] }
 serde_yaml = { version = "0.9.17" }
-sqlx = { version = "0.7.3", features = ["runtime-tokio-rustls", "sqlite"] }
-tokio = { version = "1.25.0", features = ["fs", "macros", "rt-multi-thread"] }
+sqlx = { version = "0.7.3", features = ["runtime-tokio", "sqlite"] }
+tokio = { version = "1.25.0", features = [
+    "fs",
+    "macros",
+    "rt-multi-thread",
+    "sync",
+] }
+tokio-stream = { version = "0.1.14", features = ["sync"] }
 tower = { version = "0.4.13" }
 tower-http = { version = "0.4.4", features = ["fs"] }
+uuid = { version = "1.6.1", features = ["fast-rng", "v4"] }
 
 [build-dependencies]
 anyhow = { version = "1.0.71" }

@@ -5,7 +5,7 @@ use sqlx::{
         SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteQueryResult,
         SqliteSynchronous,
     },
-    ConnectOptions, Connection, Pool, Row, Sqlite,
+    ConnectOptions, Pool, Row, Sqlite,
 };
 use std::{
     net::IpAddr,
@@ -14,6 +14,9 @@ use std::{
 };
 
 use crate::api_models::{BlockedDomain, BlockedRequest, Client};
+
+const SQLDB_MIN_CONNECTIONS: u32 = 10;
+const SQLDB_MAX_CONNECTIONS: u32 = 50;
 
 #[derive(Clone)]
 pub struct DatabaseController {
@@ -31,26 +34,24 @@ impl DatabaseController {
             .disable_statement_logging();
 
         let pool = SqlitePoolOptions::new()
-            .max_connections(5)
+            .min_connections(SQLDB_MIN_CONNECTIONS)
+            .max_connections(SQLDB_MAX_CONNECTIONS)
             .connect_with(options)
             .await?;
 
-        {
-            let mut conn = pool.acquire().await?;
-
-            sqlx::query(
-                r#"
+        sqlx::query(
+            r#"
                 CREATE TABLE IF NOT EXISTS clients (
                     client_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     ip_address STRING UNIQUE,
                     last_seen REAL
                 );"#,
-            )
-            .execute(&mut *conn)
-            .await?;
+        )
+        .execute(&pool)
+        .await?;
 
-            sqlx::query(
-                r#"
+        sqlx::query(
+            r#"
                 CREATE TABLE IF NOT EXISTS blocked_requests (
                     request_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     client_id INTEGER,
@@ -59,38 +60,35 @@ impl DatabaseController {
                     FOREIGN KEY(client_id) REFERENCES clients(client_id),
                     FOREIGN KEY(domain_id) REFERENCES blocked_domains(domain_id) 
                 );"#,
-            )
-            .execute(&mut *conn)
-            .await?;
+        )
+        .execute(&pool)
+        .await?;
 
-            sqlx::query(
-                r#"
+        sqlx::query(
+            r#"
                 CREATE TABLE IF NOT EXISTS blocked_domains (
                     domain_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     domain_address STRING UNIQUE,
                     insert_timestamp REAL,
                     whitelisted INTEGER
                 );"#,
-            )
-            .execute(&mut *conn)
-            .await?;
+        )
+        .execute(&pool)
+        .await?;
 
-            sqlx::query(
+        sqlx::query(
                 r#"
                 CREATE INDEX IF NOT EXISTS blocked_domains_idx ON blocked_domains(domain_address, whitelisted);
                 "#,
             )
-            .execute(&mut *conn)
+            .execute(&pool)
             .await?;
-        }
 
         Ok(Self { pool })
     }
 
     pub async fn add_blocked_domains(&self, blocked_domains: Vec<String>) -> Result<u32> {
-        let mut conn = self.pool.acquire().await?;
-
-        let mut tr = conn.begin().await?;
+        let mut tr = self.pool.begin().await?;
 
         let mut entries_added = 0;
         for blocked_domain in blocked_domains {
@@ -116,14 +114,12 @@ impl DatabaseController {
     }
 
     pub async fn is_domain_blacklisted<S: AsRef<str>>(&self, domain: S) -> Result<Option<u32>> {
-        let mut conn = self.pool.acquire().await?;
-
         let row = sqlx::query(
             r#"SELECT domain_id FROM blocked_domains WHERE domain_address = ? AND whitelisted = 0;
         "#,
         )
         .bind(domain.as_ref())
-        .fetch_one(&mut *conn)
+        .fetch_one(&self.pool)
         .await?;
 
         match row.try_get("domain_id") {
@@ -136,14 +132,12 @@ impl DatabaseController {
         &self,
         client_address: IpAddr,
         domain_id: u32,
-    ) -> Result<SqliteQueryResult> {
+    ) -> Result<BlockedRequest> {
         self._upsert_client_informations(client_address).await?;
         self._add_blocked_request(client_address, domain_id).await
     }
 
     pub async fn get_blocked_requests(&self, num: Option<u32>) -> Result<Vec<BlockedRequest>> {
-        let mut conn = self.pool.acquire().await?;
-
         // TODO: change hardcoded value of 1024
         let num_entries = num.unwrap_or(1024);
 
@@ -156,7 +150,7 @@ impl DatabaseController {
         "#,
         )
         .bind(num_entries)
-        .fetch(&mut *conn);
+        .fetch(&self.pool);
 
         let mut res = vec![];
         while let Some(row) = rows.try_next().await? {
@@ -172,8 +166,6 @@ impl DatabaseController {
     }
 
     pub async fn get_blocked_domains(&self, num: Option<u32>) -> Result<Vec<BlockedDomain>> {
-        let mut conn = self.pool.acquire().await?;
-
         // TODO: change hardcoded value of 1024
         let num_entries = num.unwrap_or(1024);
 
@@ -186,7 +178,7 @@ impl DatabaseController {
         "#,
         )
         .bind(num_entries)
-        .fetch(&mut *conn);
+        .fetch(&self.pool);
 
         let mut res = vec![];
         while let Some(row) = rows.try_next().await? {
@@ -203,13 +195,11 @@ impl DatabaseController {
     }
 
     pub async fn get_clients(&self) -> Result<Vec<Client>> {
-        let mut conn = self.pool.acquire().await?;
-
         let mut rows = sqlx::query(
             r#"SELECT * FROM clients ORDER BY last_seen;
         "#,
         )
-        .fetch(&mut *conn);
+        .fetch(&self.pool);
 
         let mut res = vec![];
         while let Some(row) = rows.try_next().await? {
@@ -223,12 +213,30 @@ impl DatabaseController {
         Ok(res)
     }
 
+    pub async fn get_blocked_request(&self, request_id: i64) -> Result<BlockedRequest> {
+        let row = sqlx::query(
+            r#"SELECT A.*, B.*
+            FROM blocked_requests AS A
+            LEFT JOIN blocked_domains AS B ON B.domain_id = A.domain_id
+            WHERE A.request_id = ?;
+        "#,
+        )
+        .bind(request_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(BlockedRequest {
+            request_id: row.try_get("request_id")?,
+            client_id: row.try_get("client_id")?,
+            request_address: row.try_get("domain_address")?,
+            timestamp: row.try_get("blocked_timestamp")?,
+        })
+    }
+
     async fn _upsert_client_informations(
         &self,
         client_address: IpAddr,
     ) -> Result<SqliteQueryResult> {
-        let mut conn = self.pool.acquire().await?;
-
         // TODO: Utc or Date ?
         let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs_f64();
 
@@ -240,7 +248,7 @@ impl DatabaseController {
         .bind(client_address.to_string())
         .bind(timestamp)
         .bind(timestamp)
-        .execute(&mut *conn)
+        .execute(&self.pool)
         .await?)
     }
 
@@ -248,9 +256,7 @@ impl DatabaseController {
         &self,
         client_address: IpAddr,
         domain_id: u32,
-    ) -> Result<SqliteQueryResult> {
-        let mut conn = self.pool.acquire().await?;
-
+    ) -> Result<BlockedRequest> {
         // TODO: Utc or Date ?
         let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs_f64();
 
@@ -258,11 +264,11 @@ impl DatabaseController {
         let client_id: i64 =
             sqlx::query(r#"SELECT client_id FROM clients WHERE ip_address = ? LIMIT 1;"#)
                 .bind(client_address.to_string())
-                .fetch_one(&mut *conn)
+                .fetch_one(&self.pool)
                 .await?
                 .try_get("client_id")?;
 
-        Ok(sqlx::query(
+        let request_id = sqlx::query(
             r#"INSERT INTO blocked_requests (client_id, domain_id, blocked_timestamp) 
             VALUES (?, ?, ?);
         "#,
@@ -270,7 +276,10 @@ impl DatabaseController {
         .bind(client_id)
         .bind(domain_id)
         .bind(timestamp)
-        .execute(&mut *conn)
-        .await?)
+        .execute(&self.pool)
+        .await?
+        .last_insert_rowid();
+
+        self.get_blocked_request(request_id).await
     }
 }

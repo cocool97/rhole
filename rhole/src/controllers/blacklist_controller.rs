@@ -1,27 +1,33 @@
 use std::{convert::TryFrom, net::IpAddr};
 
-use crate::api_models::{SourceEntry, SourceType};
+use crate::api_models::{BlockedRequest, SourceEntry, SourceType};
+use crate::utils;
 use anyhow::{anyhow, Result};
 use regex::RegexBuilder;
 use reqwest::Url;
-use sqlx::sqlite::SqliteQueryResult;
 
-use crate::utils;
-
-use super::{DatabaseController, NetworkController};
+use super::{DatabaseController, NetworkController, WatcherController};
 
 pub struct BlacklistController {
     db_controller: DatabaseController,
+    blocked_requests_controller: WatcherController<Option<BlockedRequest>>,
 }
 
 impl BlacklistController {
-    pub fn new(db_controller: DatabaseController) -> Self {
-        Self { db_controller }
+    pub fn new(
+        db_controller: DatabaseController,
+        blocked_requests_controller: WatcherController<Option<BlockedRequest>>,
+    ) -> Self {
+        Self {
+            db_controller,
+            blocked_requests_controller,
+        }
     }
 
     pub async fn init_from_sources(
         sources: &[SourceEntry],
         db_controller: DatabaseController,
+        listener_controller: WatcherController<Option<BlockedRequest>>,
     ) -> Result<Self> {
         log::debug!("Received {} source(s)...", sources.len());
 
@@ -73,7 +79,10 @@ impl BlacklistController {
             }
         }
 
-        Ok(Self { db_controller })
+        Ok(Self {
+            db_controller,
+            blocked_requests_controller: listener_controller,
+        })
     }
 
     pub async fn is_domain_blacklisted<S: AsRef<str>>(
@@ -85,13 +94,18 @@ impl BlacklistController {
             .await
     }
 
-    pub async fn add_blocked_request(
-        &self,
-        client_ip: IpAddr,
-        domain_id: u32,
-    ) -> Result<SqliteQueryResult> {
-        self.db_controller
+    pub async fn add_blocked_request(&self, client_ip: IpAddr, domain_id: u32) -> Result<()> {
+        // Insert it in database for future work
+        let blocked_request = self
+            .db_controller
             .add_blocked_request(client_ip, domain_id)
-            .await
+            .await?;
+
+        // Notify all watchers that a new domain has been blocked
+        self.blocked_requests_controller
+            .notify(Some(blocked_request))
+            .await;
+
+        Ok(())
     }
 }

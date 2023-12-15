@@ -6,3 +6,4 @@ dev-hosts.txt
 rhole.db*
 keys
 rhole.docker
+test.sh
