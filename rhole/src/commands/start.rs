@@ -8,7 +8,9 @@ use crate::{
 use anyhow::{anyhow, Result};
 use async_graphql::{EmptyMutation, Schema};
 use async_graphql_axum::GraphQLSubscription;
-use axum::{routing::get, Router};
+use axum::{
+    body::Body, extract::State, http::Request, response::{IntoResponse, Redirect}, routing::get, Router,
+};
 use axum_server::tls_rustls::RustlsConfig;
 use hickory_server::ServerFuture;
 use log::error;
@@ -26,12 +28,11 @@ use tokio::{
     fs::File,
     net::{TcpListener, UdpSocket},
 };
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 
 use crate::{
     controllers::{BlacklistController, DatabaseController, RequestsController},
     graphql::RholeQueries,
-    models::RouterData,
     utils,
 };
 
@@ -147,16 +148,19 @@ pub async fn start(
     .finish();
 
     let router_state = RouterState {
-        router_data: Arc::new(RouterData {
-            graphql_schema: graphql_schema.clone(),
-        }),
+        graphql_schema: graphql_schema.clone(),
+        html_dir: config.html_dir,
     };
 
-    let router = Router::new()
+    let api_router = Router::new()
         .route("/graphql", get(graphiql_playground).post(graphql))
-        .route_service("/ws", GraphQLSubscription::new(graphql_schema))
+        .route_service("/ws", GraphQLSubscription::new(graphql_schema));
+
+    let router = Router::new()
         .route("/echo", get(|| async { env!("CARGO_PKG_VERSION") }))
-        .fallback_service(ServeDir::new(config.html_dir))
+        .nest("/api", api_router)
+        .route("/index.html", get(|| async { Redirect::permanent("/") }))
+        .fallback(handle_webapp)
         .with_state(router_state);
 
     let listen_addr: SocketAddr = format!(
@@ -183,6 +187,18 @@ pub async fn start(
     }
 
     Ok(())
+}
+
+async fn handle_webapp(
+    State(state): State<RouterState>,
+    request: Request<Body>,
+) -> impl IntoResponse {
+    ServeDir::new(&state.html_dir)
+        .append_index_html_on_directories(true)
+        .not_found_service(ServeFile::new(state.html_dir.join("index.html")))
+        .try_call(request)
+        .await
+        .unwrap()
 }
 
 async fn tls_config(cert_chain: &[Certificate], key: &[u8]) -> Result<RustlsConfig> {

@@ -3,16 +3,13 @@ use async_graphql::{EmptyMutation, Schema};
 use crate::api_models::{BlockedRequest, ServerConfig};
 use crate::controllers::{DatabaseController, WatcherController};
 use crate::graphql::{RholeQueries, RholeSubscriptions};
-use std::sync::Arc;
+use std::path::PathBuf;
 use std::time::SystemTime;
 
 #[derive(Clone)]
 pub struct RouterState {
-    pub router_data: Arc<RouterData>,
-}
-
-pub struct RouterData {
     pub graphql_schema: Schema<RholeQueries, EmptyMutation, RholeSubscriptions>,
+    pub html_dir: PathBuf
 }
 
 pub struct GraphQLState {

@@ -1,18 +1,18 @@
 use anyhow::Result;
-use async_graphql::{Enum, SimpleObject};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     fmt::Display,
     net::{AddrParseError, Ipv4Addr, SocketAddr, SocketAddrV4},
+    path::PathBuf,
     str::FromStr,
 };
 
-#[derive(Debug, Deserialize, Serialize, Clone, SimpleObject)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ServerConfig {
     pub database_path: String,
     pub tls: TlsConfig,
-    pub html_dir: String,
+    pub html_dir: PathBuf,
     #[serde(default)]
     pub local_hosts: HashMap<String, Ipv4Addr>,
     pub net: NetConfig,
@@ -20,65 +20,65 @@ pub struct ServerConfig {
     pub sources: Sources,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, SimpleObject)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct TlsConfig {
     pub certificate_path: String,
     pub pkey_path: String,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, SimpleObject)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct NetConfig {
     pub dns: NetDnsConfig,
     pub dot: NetDotConfig,
     pub web_interface: NetWebInterfaceConfig,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, SimpleObject)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct NetDnsConfig {
     pub listen_addr: String,
     pub listen_port: u16,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, SimpleObject)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct NetDotConfig {
     pub listen_addr: String,
     pub listen_port: u16,
     pub timeout: u64,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, SimpleObject)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct NetWebInterfaceConfig {
     pub listen_addr: String,
     pub listen_port: u16,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, SimpleObject)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ProxyServer {
     pub ip: String,
     pub port: u16,
     pub tls_dns_name: String,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, SimpleObject)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Sources {
     pub update_interval: u64,
     pub entries: Vec<SourceEntry>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, SimpleObject)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct SourceEntry {
     pub source_type: SourceType,
     pub location: String,
     pub comment: String,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Copy, Eq, PartialEq, Enum)]
+#[derive(Debug, Deserialize, Serialize, Clone, Copy, Eq, PartialEq)]
 pub enum SourceType {
     Network,
     File,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, SimpleObject)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Cache {
     pub validity: u16,
 }

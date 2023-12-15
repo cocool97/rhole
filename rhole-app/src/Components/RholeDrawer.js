@@ -5,7 +5,6 @@ import MuiDrawer from '@mui/material/Drawer';
 import PeopleIcon from '@mui/icons-material/People';
 import DangerousIcon from '@mui/icons-material/Dangerous';
 import ChecklistIcon from '@mui/icons-material/Checklist';
-import BookIcon from '@mui/icons-material/Book';
 import HomeIcon from '@mui/icons-material/Home';
 import { useTheme } from "@emotion/react";
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -41,11 +40,6 @@ const drawerItems = [
         "logo": <WatchLaterIcon />,
         "redirectTo": "/realtime"
     },
-    {
-        "name": "Server configuration",
-        "logo": <BookIcon />,
-        "redirectTo": "/config"
-    }
 ];
 
 const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(

@@ -5,22 +5,21 @@ import Clients from "./Views/Clients";
 import { ApolloClient, ApolloProvider, HttpLink, InMemoryCache, split } from "@apollo/client";
 import MainPage from "./Views/MainPage";
 import MainView from "./Components/AppBar";
-import { API_DOMAIN, API_SCHEME } from "./Constants";
+import { API_DOMAIN, API_ROUTE, API_SCHEME, WS_SCHEME } from "./Constants";
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import BlockedRequests from "./Views/BlockedRequests";
 import BlockedDomains from "./Views/BlockedDomains";
-import ServerConfig from "./Views/ServerConfig";
 import { getMainDefinition } from "@apollo/client/utilities";
 import { createClient } from "graphql-ws";
 
 const App = () => {
     const httpLink = new HttpLink({
-        uri: API_SCHEME + API_DOMAIN + "/graphql"
+        uri: API_SCHEME + API_DOMAIN + API_ROUTE + "/graphql"
 
     });
 
     const wsLink = new GraphQLWsLink(createClient({
-        url: 'ws://' + API_DOMAIN + '/ws',
+        url: WS_SCHEME + API_DOMAIN + API_ROUTE + '/ws',
     }));
 
     // The split function takes three parameters:
@@ -86,14 +85,6 @@ const App = () => {
                         element={
                             <MainView>
                                 TODO
-                            </MainView>
-                        }
-                    />
-                    <Route
-                        path="/config"
-                        element={
-                            <MainView>
-                                <ServerConfig />
                             </MainView>
                         }
                     />
