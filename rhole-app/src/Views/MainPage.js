@@ -4,7 +4,7 @@ import { Box, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typogr
 import { INFOS_QUERY } from "../queries/client";
 import InboxIcon from '@mui/icons-material/Inbox';
 
-const MainPage = () => {
+const Dashboard = () => {
     const { loading, data } = useQuery(INFOS_QUERY);
 
     return (
@@ -80,4 +80,4 @@ MainPageElement.defaultProps = {
     title: ""
 }
 
-export default MainPage;
+export default Dashboard;

@@ -16,7 +16,7 @@ const drawerWidth = 240;
 
 const drawerItems = [
     {
-        "name": "Home",
+        "name": "Dashboard",
         "logo": <HomeIcon />,
         "redirectTo": "/"
     },

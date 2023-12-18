@@ -11,7 +11,7 @@ use std::{
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ServerConfig {
     pub database_path: String,
-    pub tls: TlsConfig,
+    pub tls: Option<TlsConfig>,
     pub html_dir: PathBuf,
     #[serde(default)]
     pub local_hosts: HashMap<String, Ipv4Addr>,
@@ -29,7 +29,6 @@ pub struct TlsConfig {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct NetConfig {
     pub dns: NetDnsConfig,
-    pub dot: NetDotConfig,
     pub web_interface: NetWebInterfaceConfig,
 }
 
@@ -37,13 +36,6 @@ pub struct NetConfig {
 pub struct NetDnsConfig {
     pub listen_addr: String,
     pub listen_port: u16,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct NetDotConfig {
-    pub listen_addr: String,
-    pub listen_port: u16,
-    pub timeout: u64,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

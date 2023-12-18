@@ -22,9 +22,6 @@ pub enum RholeCommand {
         /// Do not update database from sources
         #[clap(short = 'n', long = "no-update-db")]
         no_update_db: bool,
-        /// HTTP mode
-        #[clap(long = "http")]
-        http: bool,
     },
     /// Displays build informations
     Info,

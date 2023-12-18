@@ -23,8 +23,7 @@ async fn main() -> Result<()> {
             debug,
             config_path,
             no_update_db,
-            http,
-        } => commands::start(debug, config_path, no_update_db, http).await?,
+        } => commands::start(debug, config_path, no_update_db).await?,
         RholeCommand::Info => commands::info(),
     }
 

@@ -1,4 +1,9 @@
-use std::{collections::HashMap, net::Ipv4Addr, str::FromStr};
+use std::{
+    collections::HashMap,
+    net::Ipv4Addr,
+    str::FromStr,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use anyhow::Result;
 use hickory_client::{
@@ -16,9 +21,12 @@ use hickory_server::{
     server::{Request, RequestHandler, ResponseHandler, ResponseInfo},
 };
 
-use crate::{api_models::ProxyServer, models::dns_default_response};
+use crate::{
+    api_models::LiveRequest,
+    models::{dns_default_response, ProxyServer},
+};
 
-use super::BlacklistController;
+use super::{BlacklistController, WatcherController};
 
 pub fn get_static_hosts(local_hosts: &HashMap<String, Ipv4Addr>) -> Option<Hosts> {
     let mut hosts = Hosts::new();
@@ -55,6 +63,7 @@ pub fn get_static_hosts(local_hosts: &HashMap<String, Ipv4Addr>) -> Option<Hosts
 pub struct RequestsController {
     resolver: AsyncResolver<GenericConnector<TokioRuntimeProvider>>,
     blacklist_controller: BlacklistController,
+    live_requests_controller: WatcherController<Option<LiveRequest>>,
 }
 
 impl RequestsController {
@@ -62,6 +71,7 @@ impl RequestsController {
         proxy: ProxyServer,
         blacklist_controller: BlacklistController,
         local_hosts: &HashMap<String, Ipv4Addr>,
+        live_requests_controller: WatcherController<Option<LiveRequest>>,
     ) -> Result<Self> {
         let name_server_config = NameServerConfig {
             socket_addr: std::net::SocketAddr::new(
@@ -86,6 +96,7 @@ impl RequestsController {
         Ok(Self {
             resolver,
             blacklist_controller,
+            live_requests_controller,
         })
     }
 
@@ -142,7 +153,18 @@ impl RequestsController {
             .header_mut()
             .set_message_type(MessageType::Response);
 
-        Ok(response_handle.send_response(response).await?)
+        let response_info = response_handle.send_response(response).await?;
+
+        self.live_requests_controller
+            .notify(Some(LiveRequest {
+                request_id: request.id(),
+                client_address: request.src().ip().to_string(),
+                request_address: query_question,
+                timestamp: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs_f64(),
+            }))
+            .await;
+
+        Ok(response_info)
     }
 }
 

@@ -1,13 +1,27 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useQuery } from "@apollo/client";
 import { CLIENTS_QUERY } from "../queries/client";
-import { Box, Divider, List, ListItemAvatar, ListItemButton, ListItemText, ListSubheader } from "@mui/material";
+import { Box, Divider, List, ListItemAvatar, ListItemButton, ListItemText, ListSubheader, Typography } from "@mui/material";
 import PermIdentityIcon from '@mui/icons-material/PermIdentity';
 import { ClientInformations } from "../Components/ClientInformations";
+import { useSearchParams } from "react-router-dom";
+
+const CLIENT_ID_PARAM_NAME = "client_id";
 
 const Clients = () => {
     const { loading, error, data } = useQuery(CLIENTS_QUERY);
+    const [searchParams, setSearchParams] = useSearchParams();
     const [currentClient, setCurrentClient] = React.useState(null);
+
+    useEffect(() => {
+        const queryClient = searchParams.get(CLIENT_ID_PARAM_NAME);
+        if (queryClient && data) {
+            const matches = data.clients.filter((client) => client.clientId === parseInt(queryClient));
+            if (matches.length > 0) {
+                setCurrentClient(matches[0])
+            } 
+        }
+    }, [data, searchParams]);
 
     if (error) { console.log(error); return <>{error.message}</> }
 
@@ -24,7 +38,19 @@ const Clients = () => {
                 <List
                     subheader={
                         <ListSubheader>
-                            Client listing
+                            <Box
+                                display="flex"
+                                flexDirection="row"
+                                sx={{
+                                    "& > *": {
+                                        display: "flex",
+                                        flex: 1
+                                    }
+                                }}
+                            >
+                                <Typography justifyContent="start">Client(s) listing</Typography>
+                                <Typography justifyContent="end">{data?.clients.length || 0} found</Typography>
+                            </Box>
                         </ListSubheader>
                     }
                     sx={{
@@ -34,21 +60,12 @@ const Clients = () => {
                 >
                     {!loading && data?.clients.map((client) => {
                         return (
-                            <React.Fragment
+                            <ClientListItem
                                 key={client.clientId}
-                            >
-                                <ListItemButton
-                                    onClick={(_) => setCurrentClient(client)}
-                                >
-                                    <ListItemAvatar>
-                                        <PermIdentityIcon />
-                                    </ListItemAvatar>
-                                    <ListItemText
-                                        primary={client.address}
-                                    />
-                                </ListItemButton>
-                                <Divider />
-                            </React.Fragment>
+                                client={client}
+                                setCurrentClient={setCurrentClient}
+                                setSearchParams={setSearchParams}
+                            />
                         )
                     })}
                 </List>
@@ -63,6 +80,24 @@ const Clients = () => {
                     <ClientInformations client={currentClient} />}
             </Box>
         </Box>
+    )
+}
+
+const ClientListItem = (props) => {
+    return (
+        <React.Fragment>
+            <ListItemButton
+                onClick={(_) => { props.setCurrentClient(props.client); props.setSearchParams({ [CLIENT_ID_PARAM_NAME]: props.client.clientId }) }}
+            >
+                <ListItemAvatar>
+                    <PermIdentityIcon />
+                </ListItemAvatar>
+                <ListItemText
+                    primary={props.client.address}
+                />
+            </ListItemButton>
+            <Divider />
+        </React.Fragment>
     )
 }
 

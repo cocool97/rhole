@@ -1,7 +1,7 @@
 database_path: rhole.db
-tls:
-  certificate_path: keys/crt.pem
-  pkey_path: keys/key.pem
+# tls:
+#   certificate_path: keys/crt.pem
+#   pkey_path: keys/key.pem
 html_dir: "dist"
 local_hosts:
   test.lan.: "192.168.0.10"
@@ -22,10 +22,6 @@ net:
   dns:
     listen_addr: "localhost"
     listen_port: 5053
-  dot:
-    listen_addr: "localhost"
-    listen_port: 8053
-    timeout: 2
   web_interface:
     listen_addr: "127.0.0.1"
     listen_port: 40443

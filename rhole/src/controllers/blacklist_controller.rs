@@ -1,10 +1,10 @@
-use std::{convert::TryFrom, net::IpAddr};
-
-use crate::api_models::{BlockedRequest, SourceEntry, SourceType};
+use crate::models::SourceEntry;
 use crate::utils;
+use crate::{api_models::BlockedRequest, models::SourceType};
 use anyhow::{anyhow, Result};
 use regex::RegexBuilder;
 use reqwest::Url;
+use std::{convert::TryFrom, net::IpAddr};
 
 use super::{DatabaseController, NetworkController, WatcherController};
 
@@ -27,7 +27,7 @@ impl BlacklistController {
     pub async fn init_from_sources(
         sources: &[SourceEntry],
         db_controller: DatabaseController,
-        listener_controller: WatcherController<Option<BlockedRequest>>,
+        blocked_requests_controller: WatcherController<Option<BlockedRequest>>,
     ) -> Result<Self> {
         log::debug!("Received {} source(s)...", sources.len());
 
@@ -81,7 +81,7 @@ impl BlacklistController {
 
         Ok(Self {
             db_controller,
-            blocked_requests_controller: listener_controller,
+            blocked_requests_controller,
         })
     }
 
