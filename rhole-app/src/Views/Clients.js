@@ -19,7 +19,7 @@ const Clients = () => {
             const matches = data.clients.filter((client) => client.clientId === parseInt(queryClient));
             if (matches.length > 0) {
                 setCurrentClient(matches[0])
-            } 
+            }
         }
     }, [data, searchParams]);
 
@@ -73,7 +73,7 @@ const Clients = () => {
             <Box
                 display="flex"
                 flexDirection="column"
-                flex={3}
+                flex={4}
                 marginLeft={4}
             >
                 {currentClient !== null &&

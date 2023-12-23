@@ -12,7 +12,5 @@ export const INFOS_QUERY = gql`query {
     infos {
         uptime
         buildVersion
-        buildTimestamp
-        buildOsVersion
     }
 }`;

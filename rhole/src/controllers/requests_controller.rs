@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    net::Ipv4Addr,
+    net::{IpAddr, Ipv4Addr},
     str::FromStr,
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -26,7 +26,7 @@ use crate::{
     models::{dns_default_response, ProxyServer},
 };
 
-use super::{BlacklistController, WatcherController};
+use super::{BlacklistController, DatabaseController, WatcherController};
 
 pub fn get_static_hosts(local_hosts: &HashMap<String, Ipv4Addr>) -> Option<Hosts> {
     let mut hosts = Hosts::new();
@@ -63,15 +63,18 @@ pub fn get_static_hosts(local_hosts: &HashMap<String, Ipv4Addr>) -> Option<Hosts
 pub struct RequestsController {
     resolver: AsyncResolver<GenericConnector<TokioRuntimeProvider>>,
     blacklist_controller: BlacklistController,
-    live_requests_controller: WatcherController<Option<LiveRequest>>,
+    live_requests_controller: WatcherController<Option<LiveRequest>, u32>,
+    database_controller: DatabaseController,
 }
 
 impl RequestsController {
     pub async fn new(
         proxy: ProxyServer,
+        cache_size: Option<usize>,
         blacklist_controller: BlacklistController,
         local_hosts: &HashMap<String, Ipv4Addr>,
-        live_requests_controller: WatcherController<Option<LiveRequest>>,
+        live_requests_controller: WatcherController<Option<LiveRequest>, u32>,
+        database_controller: DatabaseController,
     ) -> Result<Self> {
         let name_server_config = NameServerConfig {
             socket_addr: std::net::SocketAddr::new(
@@ -88,7 +91,12 @@ impl RequestsController {
         let mut resolver_config = ResolverConfig::new();
         resolver_config.add_name_server(name_server_config);
 
-        let mut resolver = AsyncResolver::tokio(resolver_config, ResolverOpts::default());
+        let mut resolver_opts = ResolverOpts::default();
+        if let Some(cache_size) = cache_size {
+            resolver_opts.cache_size = cache_size;
+        }
+
+        let mut resolver = AsyncResolver::tokio(resolver_config, resolver_opts);
 
         // Sets static hosts resolver
         resolver.set_hosts(get_static_hosts(local_hosts));
@@ -97,6 +105,7 @@ impl RequestsController {
             resolver,
             blacklist_controller,
             live_requests_controller,
+            database_controller,
         })
     }
 
@@ -125,7 +134,6 @@ impl RequestsController {
                 let response_info = response_handle.send_response(response).await?;
 
                 if let Err(e) = self
-                    .blacklist_controller
                     .add_blocked_request(request.src().ip(), domain_id)
                     .await
                 {
@@ -155,16 +163,40 @@ impl RequestsController {
 
         let response_info = response_handle.send_response(response).await?;
 
+        let client_address = request.src().ip().to_string();
+        let client_id = self
+            .database_controller
+            .get_client_id(&client_address)
+            .await?;
+
         self.live_requests_controller
-            .notify(Some(LiveRequest {
-                request_id: request.id(),
-                client_address: request.src().ip().to_string(),
-                request_address: query_question,
-                timestamp: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs_f64(),
-            }))
+            .notify(
+                Some(LiveRequest {
+                    request_id: request.id(),
+                    client_address,
+                    request_address: query_question,
+                    timestamp: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs_f64(),
+                }),
+                Some(client_id),
+            )
             .await;
 
         Ok(response_info)
+    }
+
+    async fn add_blocked_request(&self, client_ip: IpAddr, domain_id: u32) -> Result<()> {
+        // Insert it in database for future work
+        let blocked_request = self
+            .database_controller
+            .add_blocked_request(client_ip, domain_id)
+            .await?;
+
+        // Notify all watchers that a new domain has been blocked
+        self.blacklist_controller
+            .notify_blocked(&blocked_request, blocked_request.client_id)
+            .await;
+
+        Ok(())
     }
 }
 

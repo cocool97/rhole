@@ -1,6 +1,5 @@
 [package]
 authors.workspace = true
-build = "src/build.rs"
 description = "Rust local DNS adblocker"
 edition.workspace = true
 license.workspace = true
@@ -17,13 +16,11 @@ async-trait = { version = "0.1.64" }
 axum = { version = "0.6.20" }
 axum-server = { version = "0.5.1", features = ["tls-rustls"] }
 bytes = { version = "1.4.0" }
-clap = { version = "4.2.10", features = ["derive"] }
+clap = { version = "4.2.10", features = ["derive", "env"] }
 env_logger = { version = "0.10.0" }
 futures = { version = "0.3.25" }
 hickory-client = { version = "0.24.0" }
 hickory-resolver = { version = "0.24.0", features = [
-    "dns-over-https-rustls",
-    "dns-over-rustls",
     "native-certs",
     "tokio-runtime",
 ] }
@@ -50,17 +47,6 @@ tokio-stream = { version = "0.1.14", features = ["sync"] }
 tower = { version = "0.4.13" }
 tower-http = { version = "0.4.4", features = ["add-extension", "fs"] }
 uuid = { version = "1.6.1", features = ["fast-rng", "v4"] }
-
-[build-dependencies]
-anyhow = { version = "1.0.71" }
-vergen = { version = "8.2.6", features = [
-    "build",
-    "cargo",
-    "git",
-    "gitoxide",
-    "rustc",
-    "si",
-] }
 
 [package.metadata.generate-rpm]
 assets = [

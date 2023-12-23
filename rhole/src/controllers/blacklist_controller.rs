@@ -4,19 +4,19 @@ use crate::{api_models::BlockedRequest, models::SourceType};
 use anyhow::{anyhow, Result};
 use regex::RegexBuilder;
 use reqwest::Url;
-use std::{convert::TryFrom, net::IpAddr};
+use std::convert::TryFrom;
 
 use super::{DatabaseController, NetworkController, WatcherController};
 
 pub struct BlacklistController {
     db_controller: DatabaseController,
-    blocked_requests_controller: WatcherController<Option<BlockedRequest>>,
+    blocked_requests_controller: WatcherController<Option<BlockedRequest>, u32>,
 }
 
 impl BlacklistController {
     pub fn new(
         db_controller: DatabaseController,
-        blocked_requests_controller: WatcherController<Option<BlockedRequest>>,
+        blocked_requests_controller: WatcherController<Option<BlockedRequest>, u32>,
     ) -> Self {
         Self {
             db_controller,
@@ -27,7 +27,7 @@ impl BlacklistController {
     pub async fn init_from_sources(
         sources: &[SourceEntry],
         db_controller: DatabaseController,
-        blocked_requests_controller: WatcherController<Option<BlockedRequest>>,
+        blocked_requests_controller: WatcherController<Option<BlockedRequest>, u32>,
     ) -> Result<Self> {
         log::debug!("Received {} source(s)...", sources.len());
 
@@ -94,18 +94,9 @@ impl BlacklistController {
             .await
     }
 
-    pub async fn add_blocked_request(&self, client_ip: IpAddr, domain_id: u32) -> Result<()> {
-        // Insert it in database for future work
-        let blocked_request = self
-            .db_controller
-            .add_blocked_request(client_ip, domain_id)
-            .await?;
-
-        // Notify all watchers that a new domain has been blocked
+    pub async fn notify_blocked(&self, blocked_request: &BlockedRequest, client_id: u32) {
         self.blocked_requests_controller
-            .notify(Some(blocked_request))
+            .notify(Some(blocked_request.to_owned()), Some(client_id))
             .await;
-
-        Ok(())
     }
 }

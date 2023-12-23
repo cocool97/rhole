@@ -27,19 +27,6 @@ const Dashboard = () => {
                         "value": data?.infos.buildVersion
                     }
                 ]} />
-            <MainPageElement
-                title="Build informations"
-                loading={loading}
-                data={[
-                    {
-                        "name": "Build OS Version",
-                        "value": data?.infos.buildOsVersion
-                    },
-                    {
-                        "name": "Build timestamp",
-                        "value": data?.infos.buildTimestamp
-                    }
-                ]} />
         </Box>
     )
 }

@@ -7,3 +7,4 @@ rhole.db*
 keys
 rhole.docker
 test.sh
+.vscode

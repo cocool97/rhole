@@ -194,6 +194,18 @@ impl DatabaseController {
         Ok(res)
     }
 
+    pub async fn get_client_id<S: AsRef<str>>(&self, address: S) -> Result<u32> {
+        let row = sqlx::query(
+            r#"SELECT * FROM clients where ip_address LIKE ? LIMIT 1;
+            "#,
+        )
+        .bind(address.as_ref())
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(row.try_get("client_id")?)
+    }
+
     pub async fn get_clients(&self) -> Result<Vec<Client>> {
         let mut rows = sqlx::query(
             r#"SELECT * FROM clients ORDER BY last_seen;

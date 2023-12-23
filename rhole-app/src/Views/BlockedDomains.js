@@ -59,6 +59,7 @@ const BlockedDomains = () => {
             rows={data?.blockedDomains.map((x) => ({ ...x, insertTimestamp: timestampToDate(x.insertTimestamp) })) || []}
             getRowId={(row) => row.domainId}
             columns={columns}
+            autoPageSize
             disableRowSelectionOnClick
         />
     )

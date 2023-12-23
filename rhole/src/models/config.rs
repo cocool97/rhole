@@ -10,6 +10,7 @@ use std::{
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ServerConfig {
+    pub cache_size: Option<usize>,
     pub database_path: String,
     pub tls: Option<TlsConfig>,
     pub html_dir: PathBuf,

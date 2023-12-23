@@ -10,11 +10,12 @@ impl BlockedRequestsSubscription {
     async fn blocked_requests<'ctx>(
         &self,
         ctx: &Context<'ctx>,
+        client_id: Option<u32>,
     ) -> impl Stream<Item = Option<BlockedRequest>> {
         let receiver = ctx
             .data_unchecked::<GraphQLState>()
             .blocked_requests_controller
-            .add_watcher()
+            .add_watcher(client_id)
             .await;
 
         WatchStream::from_changes(receiver)

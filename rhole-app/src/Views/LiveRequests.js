@@ -51,7 +51,9 @@ function LiveBlockedRequestsDisplay({ loading, data }) {
 }
 
 const LiveBlockedRequests = () => {
-    const { data, loading } = useSubscription(LIVE_REQUESTS_SUBSCRIPTION);
+    const { data, loading } = useSubscription(LIVE_REQUESTS_SUBSCRIPTION, {
+        variables: { clientId: null }
+    });
 
     return (
         <LiveBlockedRequestsDisplay

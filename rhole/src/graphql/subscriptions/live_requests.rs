@@ -1,4 +1,4 @@
-use crate::{models::GraphQLState, api_models::LiveRequest};
+use crate::{api_models::LiveRequest, models::GraphQLState};
 use async_graphql::{Context, Subscription};
 use tokio_stream::{wrappers::WatchStream, Stream};
 
@@ -10,11 +10,12 @@ impl LiveRequestsSubscription {
     async fn live_requests<'ctx>(
         &self,
         ctx: &Context<'ctx>,
+        client_id: Option<u32>,
     ) -> impl Stream<Item = Option<LiveRequest>> {
         let receiver = ctx
             .data_unchecked::<GraphQLState>()
             .live_requests_controller
-            .add_watcher()
+            .add_watcher(client_id)
             .await;
 
         WatchStream::from_changes(receiver)

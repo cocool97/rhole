@@ -1,54 +1,55 @@
-# rhole: Rust local DNS adblocker
+# rhole: Privacy as a whole
 
-[![Latest version](https://img.shields.io/crates/v/rhole.svg)](https://crates.io/crates/rhole)
 [![dependency status](https://deps.rs/repo/github/cocool97/rhole/status.svg)](https://deps.rs/repo/github/cocool97/rhole)
-[![codecov](https://codecov.io/gh/cocool97/rhole/branch/master/graph/badge.svg?token=2PMZ6D9E5M)](https://codecov.io/gh/cocool97/rhole)
+[![codecov](https://codecov.io/gh/cocool97/rhole/branch/master/graph/badge.svg)](https://codecov.io/gh/cocool97/rhole)
 
-Highly configurable Rust local DNS adblocker.
+rhole is a fully open-source and community Rust / ReactJS project aiming to empower your privacy, by providing an easy-to-setup DNS server.
 
-## Main advantages
+It is focused on **<ins>performance</ins>** and **<ins>usability</ins>** to be as transparent as possible on your network.
 
-* Highly configurable
-  * Use of many kinds of blocking lists
-  * Remote DNS proxy server configuration
-* Easy to setup
-  * Can be cross-compiled to various targets
-  * Default configuration file
-  * RPM package build
+With rhole you will be able to :
+
+- Block all kind of DNS records like advertising, pornography, malware, fake news...
+- Monitor your DNS trafic in real-time, configure the server or unblock domains using the provided web interface.
+- Serve your own DNS records.
+- [**TODO**] Increasing your privacy on Internet by providing a DOH (DNS-Over-HTTP) recursor, aiming to reduce clear DNS traffic.
+- [**TODO**] Sign DNS records according to DNSSEC specification
+- [**TODO**] Setup a HTTP(s) proxy being able to inspect requests and block as you wish.
+- [**TODO**] Setup a DOH (DNS-Over-HTTP) server.
+- [**TODO**] Setup a DOT (DNS-Over-TLS) server.
+- [**TODO**] Use an Android/iOS application to monitor your trafic and block domains locally, without ask the server.
 
 ## How does it work ?
 
-`rhole` reads blacklist entries from various remote sources, inserts them in database and checks against it for every DNS requests received.
+`rhole` reads blacklist entries from various remote sources, inserts them in a database and checks against it for every DNS requests received on its server. Domains are cached to improve performances.
 
-## Compilation
+On a DNS level, many projects are providing up-to-date blacklists, I personally recommend using [StevenBlack's](https://github.com/StevenBlack/hosts) as it is configurable in what topics can be blocked. To maximize the blocking scope, many lists can be inserted in parallel.
 
-* Fedora
+## Setup
+
+All these methods require using `rhole` as a primary DNS server. This setup will depend on your distribution.
+
+It is therefore recommended to set the server IP directly in your DHCP server configuration as `option domain-name-servers` to automatically inject this server to all clients configured via DHCP.
+
+### Using Docker / Podman
+
+A `Dockerfile` is provided to ease setup.
 
 ```bash
-# Adds support for arm-gnueabihf toolchain
-sudo dnf copr enable lantw44/arm-linux-gnueabihf-toolchain
-sudo dnf install arm-linux-gnueabihf-{binutils,gcc,glibc}
+docker build -t rhole:latest -f Dockerfile .
 
-# armv7-musl
-CC=arm-linux-gnueabihf-gcc cargo build --release --target armv7-unknown-linux-musleabihf
-
-# armv7
-cargo build --release --target armv7-unknown-linux-gnueabihf
+docker run \
+  -it \
+  --rm \
+  -v config.yml:/etc/rhole/config.yml:ro,z \ # rhole configuration file
+  -v data:/etc/rhole/data:rw,z \ # rhole data directory, containing database
+  -p 53:53/udp \
+  -p 443:443/tcp \
+  -e CONFIG_PATH="/etc/rhole/config.yml" \
+  -e DEBUG=1 \
+  rhole:latest
 ```
 
-* Ubuntu
+### Locally
 
-```bash
 TODO
-```
-
-## Work to do
-
-This is an in-progress work, many things must still be achieved to reach version `1.0.0`:
-
-* Web monitoring interface
-* Code audit to improve performances + possible mistakes
-* Regularly update input sources
-* Making everything `async`
-* Increase DNS record TTL for blocked addresses
-* Log requests per equipments

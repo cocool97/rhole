@@ -30,4 +30,6 @@ RUN mkdir /etc/rhole/web
 COPY --from=npm-builder /home/rhole-app/build /etc/rhole/web
 COPY --from=rust-builder /home/rhole/target/x86_64-unknown-linux-musl/release/rhole /usr/bin/rhole
 
-CMD ["/usr/bin/rhole", "start", "--config", "/etc/rhole/config.yml"]
+ENV CONFIG_PATH=/etc/rhole/config.yml
+
+CMD ["/usr/bin/rhole"]

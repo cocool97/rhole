@@ -1,40 +1,67 @@
 import React from "react";
 import { Box, Divider, Typography } from "@mui/material"
 import { timestampToDate } from "../utils";
+import { useSubscription } from "@apollo/client";
+import { BLOCKED_REQUESTS_SUBSCRIPTION } from "../queries/blocked_requests";
+import { LIVE_REQUESTS_SUBSCRIPTION } from "../queries/live_requests";
+import RequestsDisplay from "./RequestsDisplay";
 
 export const ClientInformations = (props) => {
+    const { data: dataBlockedRequests, loading: loadingBlockedRequests } = useSubscription(BLOCKED_REQUESTS_SUBSCRIPTION, {
+        variables: { clientId: props.client.clientId }
+    });
+
+    const { data: dataLiveRequests, loading: loadingLiveRequests } = useSubscription(LIVE_REQUESTS_SUBSCRIPTION, {
+        variables: { clientId: props.client.clientId }
+    });
+
     return (
         <Box
             display="flex"
             flexDirection="column"
             width="100%"
             height="100%"
-            sx={{
-                "& > *": {
-                    flex: 1
-                }
-            }}
         >
-            <Box>
-                <h1>{props.client.address}</h1>
-                <h4>{timestampToDate(props.client.lastSeen)}</h4>
-                <h4>{props.client.clientId}</h4>
-            </Box>
             <Box
                 display="flex"
                 flexDirection="row"
+                flex={1}
+                alignItems="center"
             >
-                <Box
+                <Typography
                     flex={1}
-                >
-                    <Typography align="center">Real time requests</Typography>
-                </Box>
+                    sx={{ fontWeight: "bold", fontSize: 30 }}
+                >{props.client.address}</Typography>
+                <Typography
+                    display="flex"
+                    justifyContent="flex-end"
+                    flex={1}
+                    sx={{ fontSize: 15 }}
+                >Last seen: {timestampToDate(props.client.lastSeen)}</Typography>
+            </Box>
+            <Divider />
+            <Box
+                display="flex"
+                flexDirection="row"
+                overflow="hidden"
+                flex={9}
+                sx={{
+                    "& > div": {
+                        width: "50%"
+                    }
+                }}
+            >
+                <RequestsDisplay
+                    header="Live blocked requests"
+                    data={dataBlockedRequests?.blockedRequests}
+                    loading={loadingBlockedRequests}
+                />
                 <Divider orientation="vertical" />
-                <Box
-                    flex={1}
-                >
-                    <Typography align="center">Blocked requests</Typography>
-                </Box>
+                <RequestsDisplay
+                    header="Live requests"
+                    data={dataLiveRequests?.liveRequests}
+                    loading={loadingLiveRequests}
+                />
             </Box>
         </Box>
     )

@@ -9,8 +9,8 @@ export const BLOCKED_REQUESTS_QUERY = gql`query {
   }
 }`;
 
-export const BLOCKED_REQUESTS_SUBSCRIPTION = gql`subscription {
-  blockedRequests {
+export const BLOCKED_REQUESTS_SUBSCRIPTION = gql`subscription BlockedRequests($clientId: Int) {
+  blockedRequests(clientId: $clientId) {
     requestId
     clientId
     requestAddress

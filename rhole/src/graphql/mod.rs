@@ -1,5 +1,5 @@
 mod queries;
 mod subscriptions;
 
-pub use queries::{ClientsQuery, RholeQueries};
+pub use queries::RholeQueries;
 pub use subscriptions::RholeSubscriptions;
