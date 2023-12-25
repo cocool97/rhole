@@ -3,8 +3,8 @@ import { useQuery } from "@apollo/client";
 import { CLIENTS_QUERY } from "../queries/client";
 import { Box, Divider, List, ListItemAvatar, ListItemButton, ListItemText, ListSubheader, Typography } from "@mui/material";
 import PermIdentityIcon from '@mui/icons-material/PermIdentity';
-import { ClientInformations } from "../Components/ClientInformations";
 import { useSearchParams } from "react-router-dom";
+import { ClientInformations } from "./ClientInformations";
 
 const CLIENT_ID_PARAM_NAME = "client_id";
 

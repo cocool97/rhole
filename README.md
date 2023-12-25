@@ -46,6 +46,8 @@ docker run \
   -p 53:53/udp \
   -p 443:443/tcp \
   -e CONFIG_PATH="/etc/rhole/config.yml" \
+  -e DNS_ADDR="0.0.0.0:53" \
+  -e WEB_ADDR="0.0.0.0:443" \
   -e DEBUG=1 \
   rhole:latest
 ```
@@ -53,3 +55,19 @@ docker run \
 ### Locally
 
 TODO
+
+## How to use it ?
+
+### Write initial configuration file
+
+- Will not be mandatory after
+
+TODO
+
+### Access WEB UI
+
+TODO
+
+- URL
+- Screen(s)
+- Add license

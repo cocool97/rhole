@@ -42,6 +42,7 @@ const MainPageElement = (props) => {
             }}
             padding="20px"
             flexDirection="column"
+            height="fit-content"
         >
             <Typography textAlign="center" height="fit-content" component="h6" fontWeight="bold">{props.title}</Typography>
             <Box>

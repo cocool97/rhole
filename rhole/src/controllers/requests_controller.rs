@@ -20,6 +20,7 @@ use hickory_server::{
     authority::MessageResponseBuilder,
     server::{Request, RequestHandler, ResponseHandler, ResponseInfo},
 };
+use log::error;
 
 use crate::{
     api_models::LiveRequest,
@@ -163,21 +164,22 @@ impl RequestsController {
 
         let response_info = response_handle.send_response(response).await?;
 
-        let client_address = request.src().ip().to_string();
-        let client_id = self
+        let client_ip = request.src().ip();
+
+        let client = self
             .database_controller
-            .get_client_id(&client_address)
+            .upsert_client_informations(client_ip)
             .await?;
 
         self.live_requests_controller
             .notify(
                 Some(LiveRequest {
                     request_id: request.id(),
-                    client_address,
+                    client_address: client_ip.to_string(),
                     request_address: query_question,
                     timestamp: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs_f64(),
                 }),
-                Some(client_id),
+                Some(client.client_id),
             )
             .await;
 
@@ -212,7 +214,8 @@ impl RequestHandler for RequestsController {
             .await
         {
             Ok(r) => r,
-            Err(_) => {
+            Err(e) => {
+                error!("Error while handling request: {e}");
                 let response = dns_default_response(request, ResponseCode::ServFail);
                 response_handle
                     .send_response(response)

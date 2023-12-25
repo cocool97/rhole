@@ -17,13 +17,14 @@ const RequestsDisplay = (props) => {
             display="flex"
             flexDirection="column"
         >
-            <Typography align="center" m={2} fontWeight="bold">{props.header}</Typography>
+            <Typography align="center" m={2} fontWeight="bold">{props.header} ({requests.length})</Typography>
             <Divider />
             <Box
                 overflow="scroll"
+                height="inherit"
             >
                 <List
-                    sx={{ width: "100%", height: "100%" }}
+                    sx={{ width: "100%", height: "100%", m: 0, p: 0 }}
                 >
                     {requests.map((value) => {
                         return (

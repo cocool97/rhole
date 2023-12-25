@@ -1,10 +1,7 @@
 use anyhow::Result;
 use futures::TryStreamExt;
 use sqlx::{
-    sqlite::{
-        SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteQueryResult,
-        SqliteSynchronous,
-    },
+    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteSynchronous},
     ConnectOptions, Pool, Row, Sqlite,
 };
 use std::{
@@ -133,7 +130,7 @@ impl DatabaseController {
         client_address: IpAddr,
         domain_id: u32,
     ) -> Result<BlockedRequest> {
-        self._upsert_client_informations(client_address).await?;
+        self.upsert_client_informations(client_address).await?;
         self._add_blocked_request(client_address, domain_id).await
     }
 
@@ -194,18 +191,6 @@ impl DatabaseController {
         Ok(res)
     }
 
-    pub async fn get_client_id<S: AsRef<str>>(&self, address: S) -> Result<u32> {
-        let row = sqlx::query(
-            r#"SELECT * FROM clients where ip_address LIKE ? LIMIT 1;
-            "#,
-        )
-        .bind(address.as_ref())
-        .fetch_one(&self.pool)
-        .await?;
-
-        Ok(row.try_get("client_id")?)
-    }
-
     pub async fn get_clients(&self) -> Result<Vec<Client>> {
         let mut rows = sqlx::query(
             r#"SELECT * FROM clients ORDER BY last_seen;
@@ -245,23 +230,25 @@ impl DatabaseController {
         })
     }
 
-    async fn _upsert_client_informations(
-        &self,
-        client_address: IpAddr,
-    ) -> Result<SqliteQueryResult> {
-        // TODO: Utc or Date ?
+    pub async fn upsert_client_informations(&self, client_address: IpAddr) -> Result<Client> {
         let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs_f64();
 
-        Ok(sqlx::query(
+        let row = sqlx::query(
             r#"INSERT INTO clients (ip_address, last_seen) VALUES (?, ?)
-            ON CONFLICT(ip_address) DO UPDATE SET last_seen=?;
+            ON CONFLICT(ip_address) DO UPDATE SET last_seen=? RETURNING *;
         "#,
         )
         .bind(client_address.to_string())
         .bind(timestamp)
         .bind(timestamp)
-        .execute(&self.pool)
-        .await?)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(Client {
+            client_id: row.try_get("client_id")?,
+            address: row.try_get("ip_address")?,
+            last_seen: row.try_get("last_seen")?,
+        })
     }
 
     async fn _add_blocked_request(

@@ -1,14 +1,12 @@
 import * as React from 'react';
 import { styled } from '@mui/material/styles';
-import Box from '@mui/material/Box';
 import MuiAppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
-import CssBaseline from '@mui/material/CssBaseline';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import { Link } from 'react-router-dom';
-import RholeDrawer from './RholeDrawer';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 
 const drawerWidth = 240;
 
@@ -30,50 +28,32 @@ const AppBar = styled(MuiAppBar, {
     }),
 }));
 
-const MainView = (props) => {
-    const [open, setOpen] = React.useState(false);
-
-    const handleDrawerOpen = () => {
-        setOpen(true);
-    };
-
-    const handleDrawerClose = () => {
-        setOpen(false);
-    };
-
+const RholeAppBar = (props) => {
     return (
-        <Box sx={{ display: 'flex', maxHeight: '100vh', height: '100vh' }}>
-            <CssBaseline />
-            <AppBar position="fixed" open={open}>
-                <Toolbar>
-                    <IconButton
-                        color="inherit"
-                        aria-label="open drawer"
-                        onClick={handleDrawerOpen}
-                        edge="start"
-                        sx={{
-                            marginRight: 5,
-                            ...(open && { display: 'none' }),
-                        }}
-                    >
-                        <MenuIcon />
-                    </IconButton>
-                    <Link to="/" style={{ color: 'inherit', textDecoration: 'inherit' }}>
-                        <Typography variant="h6" noWrap component="div">
-                            {process.env.REACT_APP_NAME}
-                        </Typography>
-                    </Link>
-                    <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, textAlign: "end" }}>
-                        {process.env.REACT_APP_VERSION}
+        <AppBar position="fixed">
+            <Toolbar>
+                <IconButton
+                    color="inherit"
+                    aria-label="open drawer"
+                    onClick={props.handleDrawerClick}
+                    edge="start"
+                    sx={{
+                        marginRight: 5,
+                    }}
+                >
+                    {props.open ? <ChevronLeftIcon /> : <MenuIcon />}
+                </IconButton>
+                <Link to="/" style={{ color: 'inherit', textDecoration: 'inherit' }}>
+                    <Typography variant="h6" noWrap component="div">
+                        {process.env.REACT_APP_NAME}
                     </Typography>
-                </Toolbar>
-            </AppBar>
-            <RholeDrawer open={open} handleDrawerClose={handleDrawerClose} />
-            <Box component="main" sx={{ flexGrow: 1, p: 3, mt: "64px", "& > *": { height: "100%" } }}>
-                {props.children}
-            </Box>
-        </Box>
-    );
+                </Link>
+                <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, textAlign: "end" }}>
+                    {process.env.REACT_APP_VERSION}
+                </Typography>
+            </Toolbar>
+        </AppBar>
+    )
 }
 
-export default MainView;
+export default RholeAppBar;

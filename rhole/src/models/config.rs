@@ -16,7 +16,6 @@ pub struct ServerConfig {
     pub html_dir: PathBuf,
     #[serde(default)]
     pub local_hosts: HashMap<String, Ipv4Addr>,
-    pub net: NetConfig,
     pub proxy_server: ProxyServer,
     pub sources: Sources,
 }
@@ -25,24 +24,6 @@ pub struct ServerConfig {
 pub struct TlsConfig {
     pub certificate_path: String,
     pub pkey_path: String,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct NetConfig {
-    pub dns: NetDnsConfig,
-    pub web_interface: NetWebInterfaceConfig,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct NetDnsConfig {
-    pub listen_addr: String,
-    pub listen_port: u16,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct NetWebInterfaceConfig {
-    pub listen_addr: String,
-    pub listen_port: u16,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

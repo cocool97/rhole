@@ -10,7 +10,7 @@ function LiveBlockedRequestsDisplay({ loading, data }) {
     useEffect(() => {
         if (data) {
             const liveRequests = data.liveRequests;
-            setLiveRequests((oldState) => [...oldState, { ...liveRequests, timestamp: timestampToDate(liveRequests.timestamp) }]);
+            setLiveRequests((oldState) => [{ ...liveRequests, timestamp: timestampToDate(liveRequests.timestamp) }, ...oldState]);
         }
     }, [data])
 

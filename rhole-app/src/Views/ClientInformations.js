@@ -4,7 +4,7 @@ import { timestampToDate } from "../utils";
 import { useSubscription } from "@apollo/client";
 import { BLOCKED_REQUESTS_SUBSCRIPTION } from "../queries/blocked_requests";
 import { LIVE_REQUESTS_SUBSCRIPTION } from "../queries/live_requests";
-import RequestsDisplay from "./RequestsDisplay";
+import RequestsDisplay from "../Components/RequestsDisplay";
 
 export const ClientInformations = (props) => {
     const { data: dataBlockedRequests, loading: loadingBlockedRequests } = useSubscription(BLOCKED_REQUESTS_SUBSCRIPTION, {
@@ -52,15 +52,15 @@ export const ClientInformations = (props) => {
                 }}
             >
                 <RequestsDisplay
-                    header="Live blocked requests"
-                    data={dataBlockedRequests?.blockedRequests}
-                    loading={loadingBlockedRequests}
-                />
-                <Divider orientation="vertical" />
-                <RequestsDisplay
                     header="Live requests"
                     data={dataLiveRequests?.liveRequests}
                     loading={loadingLiveRequests}
+                />
+                <Divider orientation="vertical" />
+                <RequestsDisplay
+                    header="Live blocked requests"
+                    data={dataBlockedRequests?.blockedRequests}
+                    loading={loadingBlockedRequests}
                 />
             </Box>
         </Box>

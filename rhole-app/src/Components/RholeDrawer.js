@@ -1,14 +1,11 @@
 import React from "react";
-import { Divider, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, styled } from "@mui/material";
+import { Divider, List, ListItem, ListItemButton, ListItemIcon, ListItemText, styled } from "@mui/material";
 import { Link } from "react-router-dom";
 import MuiDrawer from '@mui/material/Drawer';
 import PeopleIcon from '@mui/icons-material/People';
 import DangerousIcon from '@mui/icons-material/Dangerous';
 import ChecklistIcon from '@mui/icons-material/Checklist';
 import HomeIcon from '@mui/icons-material/Home';
-import { useTheme } from "@emotion/react";
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import WatchLaterIcon from '@mui/icons-material/WatchLater';
 import { DrawerHeader } from "./DrawerHeader";
 
@@ -81,15 +78,9 @@ const closedMixin = (theme) => ({
 });
 
 const RholeDrawer = (props) => {
-    const theme = useTheme();
-
     return (
         <Drawer variant="permanent" open={props.open}>
-            <DrawerHeader>
-                <IconButton onClick={props.handleDrawerClose}>
-                    {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-                </IconButton>
-            </DrawerHeader>
+            <DrawerHeader />
             <Divider />
             <List>
                 {drawerItems.map((elem) => (
