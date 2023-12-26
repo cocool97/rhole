@@ -1,5 +1,5 @@
 [workspace]
-members = ["rhole"]
+members = ["rhole-server"]
 package.authors = ["LIAUD Corentin <corentin.liaud@orange.fr>"]
 package.edition = "2021"
 package.license = "MIT"
