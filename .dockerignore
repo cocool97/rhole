@@ -1,6 +1,6 @@
 target/
 dist/
-rhole-app/node_modules
+rhole-web/node_modules
 keys/
 rhole.db
 rhole.docker
