@@ -1,3 +1,4 @@
+cache_size: 2048
 database_path: rhole.db
 # tls:
 #   certificate_path: keys/crt.pem
@@ -18,10 +19,3 @@ sources:
     # - source_type: !Network
     # location: http://sbc.io/hosts/alternates/fakenews-gambling-porn/hosts
     # comment: Remote hosts file
-net:
-  dns:
-    listen_addr: "localhost"
-    listen_port: 5053
-  web_interface:
-    listen_addr: "127.0.0.1"
-    listen_port: 40443

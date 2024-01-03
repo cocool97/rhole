@@ -10,13 +10,13 @@ use super::{DatabaseController, NetworkController, WatcherController};
 
 pub struct BlacklistController {
     db_controller: DatabaseController,
-    blocked_requests_controller: WatcherController<Option<BlockedRequest>, u32>,
+    blocked_requests_controller: WatcherController<Option<BlockedRequest>, i32>,
 }
 
 impl BlacklistController {
     pub fn new(
         db_controller: DatabaseController,
-        blocked_requests_controller: WatcherController<Option<BlockedRequest>, u32>,
+        blocked_requests_controller: WatcherController<Option<BlockedRequest>, i32>,
     ) -> Self {
         Self {
             db_controller,
@@ -27,7 +27,7 @@ impl BlacklistController {
     pub async fn init_from_sources(
         sources: &[SourceEntry],
         db_controller: DatabaseController,
-        blocked_requests_controller: WatcherController<Option<BlockedRequest>, u32>,
+        blocked_requests_controller: WatcherController<Option<BlockedRequest>, i32>,
     ) -> Result<Self> {
         log::debug!("Received {} source(s)...", sources.len());
 
@@ -72,10 +72,15 @@ impl BlacklistController {
                 blacklisted_domains.push(rev_address);
             }
 
-            if let Ok(entries_added) = db_controller.add_blocked_domains(blacklisted_domains).await
+            match db_controller
+                .init_blocked_domains(blacklisted_domains)
+                .await
             {
-                log::info!("Initialization finished...");
-                log::info!("Found {} addresses to blacklist...", entries_added);
+                Ok(entries_added) => {
+                    log::info!("Initialization finished...");
+                    log::info!("Found {} addresses to blacklist...", entries_added);
+                }
+                Err(e) => log::error!("{}", e),
             }
         }
 
@@ -85,16 +90,16 @@ impl BlacklistController {
         })
     }
 
-    pub async fn is_domain_blacklisted<S: AsRef<str>>(
-        &self,
-        domain_address: S,
-    ) -> Result<Option<u32>> {
+    pub async fn is_domain_blacklisted<I>(&self, domain_address: I) -> Result<Option<i32>>
+    where
+        I: IntoIterator<Item = String>,
+    {
         self.db_controller
             .is_domain_blacklisted(domain_address)
             .await
     }
 
-    pub async fn notify_blocked(&self, blocked_request: &BlockedRequest, client_id: u32) {
+    pub async fn notify_blocked(&self, blocked_request: &BlockedRequest, client_id: i32) {
         self.blocked_requests_controller
             .notify(Some(blocked_request.to_owned()), Some(client_id))
             .await;

@@ -1,8 +1,9 @@
 import React from "react";
 import { useQuery } from "@apollo/client";
-import { Box, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography } from "@mui/material";
+import { Box, List, ListItem, ListItemIcon, ListItemText, Typography } from "@mui/material";
 import { INFOS_QUERY } from "../queries/client";
-import InboxIcon from '@mui/icons-material/Inbox';
+import SettingsIcon from '@mui/icons-material/Settings';
+import TimerIcon from '@mui/icons-material/Timer';
 
 const Dashboard = () => {
     const { loading, data } = useQuery(INFOS_QUERY);
@@ -20,11 +21,13 @@ const Dashboard = () => {
                 data={[
                     {
                         "name": "Uptime",
-                        "value": data?.infos.uptime
+                        "value": data?.infos.uptime,
+                        "icon": <TimerIcon />
                     },
                     {
                         "name": "Version",
-                        "value": data?.infos.buildVersion
+                        "value": data?.infos.buildVersion,
+                        "icon": <SettingsIcon />
                     }
                 ]} />
         </Box>
@@ -48,14 +51,12 @@ const MainPageElement = (props) => {
             <Box>
                 <List>
                     {props.data.map((element, index) => {
-                        return (<ListItem key={index} disablePadding>
-                            <ListItemButton>
-                                <ListItemIcon>
-                                    <InboxIcon />
-                                </ListItemIcon>
-                                <ListItemText primary={element.name} />
-                                {props.loading ? <Typography>Loading...</Typography> : <ListItemText primary={element.value} />}
-                            </ListItemButton>
+                        return (<ListItem key={index}>
+                            <ListItemIcon>
+                                {element.icon}
+                            </ListItemIcon>
+                            <ListItemText primary={element.name} />
+                            {props.loading ? <Typography>Loading...</Typography> : <ListItemText primary={element.value} />}
                         </ListItem>)
                     })}
                 </List>

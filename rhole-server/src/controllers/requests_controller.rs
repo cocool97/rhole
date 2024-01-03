@@ -20,7 +20,7 @@ use hickory_server::{
     authority::MessageResponseBuilder,
     server::{Request, RequestHandler, ResponseHandler, ResponseInfo},
 };
-use log::error;
+use log::{error, info};
 
 use crate::{
     api_models::LiveRequest,
@@ -64,7 +64,7 @@ pub fn get_static_hosts(local_hosts: &HashMap<String, Ipv4Addr>) -> Option<Hosts
 pub struct RequestsController {
     resolver: AsyncResolver<GenericConnector<TokioRuntimeProvider>>,
     blacklist_controller: BlacklistController,
-    live_requests_controller: WatcherController<Option<LiveRequest>, u32>,
+    live_requests_controller: WatcherController<Option<LiveRequest>, i32>,
     database_controller: DatabaseController,
 }
 
@@ -74,7 +74,7 @@ impl RequestsController {
         cache_size: Option<usize>,
         blacklist_controller: BlacklistController,
         local_hosts: &HashMap<String, Ipv4Addr>,
-        live_requests_controller: WatcherController<Option<LiveRequest>, u32>,
+        live_requests_controller: WatcherController<Option<LiveRequest>, i32>,
         database_controller: DatabaseController,
     ) -> Result<Self> {
         let name_server_config = NameServerConfig {
@@ -94,6 +94,7 @@ impl RequestsController {
 
         let mut resolver_opts = ResolverOpts::default();
         if let Some(cache_size) = cache_size {
+            info!("Using cache size of {cache_size} entries...");
             resolver_opts.cache_size = cache_size;
         }
 
@@ -119,32 +120,41 @@ impl RequestsController {
         let query_question = query.name().to_string();
 
         // TODO: Treat all questions !
-        // TODO: Check trailing dots
-        let mut rev_address = String::new();
+        let mut it = vec![];
         for component in query_question.trim_end_matches('.').split('.').rev() {
-            rev_address.push_str(component);
-
-            if let Ok(Some(domain_id)) = self
-                .blacklist_controller
-                .is_domain_blacklisted(&rev_address)
-                .await
-            {
-                log::warn!("[{}] Blacklisted domain {}", request.src(), query_question);
-
-                let response = dns_default_response(request, ResponseCode::Refused);
-                let response_info = response_handle.send_response(response).await?;
-
-                if let Err(e) = self
-                    .add_blocked_request(request.src().ip(), domain_id)
-                    .await
-                {
-                    log::error!("Error during database insertion: {}", e);
-                }
-
-                return Ok(response_info);
+            if let Some(last) = it.last() {
+                // We have found a last item, we take it and push the concat of it and component
+                it.push(format!("{last}.{component}"));
+            } else {
+                // No last item found, first loop so simply pushing component
+                it.push(component.to_string());
             }
+        }
 
-            rev_address.push('.');
+        {
+            // Blacklist domain check block
+            match self.blacklist_controller.is_domain_blacklisted(it).await {
+                Ok(Some(domain_id)) => {
+                    log::warn!("[{}] Blacklisted domain {}", request.src(), query_question);
+
+                    let response = dns_default_response(request, ResponseCode::Refused);
+                    let response_info = response_handle.send_response(response).await?;
+
+                    if let Err(e) = self
+                        .add_blocked_request(request.src().ip(), domain_id)
+                        .await
+                    {
+                        log::error!("Error during database insertion: {}", e);
+                    }
+
+                    return Ok(response_info);
+                }
+                Err(e) => log::error!(
+                    "Error while getting domain status for {}: {e}",
+                    query_question.trim_end_matches('.')
+                ),
+                _ => {}
+            }
         }
 
         let response = self.resolver.lookup_ip(query.name().to_string()).await?;
@@ -166,10 +176,7 @@ impl RequestsController {
 
         let client_ip = request.src().ip();
 
-        let client = self
-            .database_controller
-            .upsert_client_informations(client_ip)
-            .await?;
+        let client = self.database_controller.upsert_client(client_ip).await?;
 
         self.live_requests_controller
             .notify(
@@ -186,7 +193,7 @@ impl RequestsController {
         Ok(response_info)
     }
 
-    async fn add_blocked_request(&self, client_ip: IpAddr, domain_id: u32) -> Result<()> {
+    async fn add_blocked_request(&self, client_ip: IpAddr, domain_id: i32) -> Result<()> {
         // Insert it in database for future work
         let blocked_request = self
             .database_controller
