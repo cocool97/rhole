@@ -1,5 +1,6 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use serde_yaml::Value;
 use std::{
     collections::HashMap,
     fmt::Display,
@@ -17,6 +18,8 @@ pub struct ServerConfig {
     pub local_hosts: HashMap<String, Ipv4Addr>,
     pub proxy_server: ProxyServer,
     pub sources: Sources,
+    #[serde(default, flatten)]
+    pub extra_args: HashMap<String, Value>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

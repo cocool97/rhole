@@ -1,4 +1,3 @@
-cache_size: 4096
 database_path: /etc/rhole/data/rhole.db
 # tls:
 #   certificate_path: /etc/rhole/ssl/crt.pem
