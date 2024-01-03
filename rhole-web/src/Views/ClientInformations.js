@@ -52,12 +52,14 @@ export const ClientInformations = (props) => {
                 }}
             >
                 <RequestsDisplay
+                    key={props.client.clientId + "live"}
                     header="Live requests"
                     data={dataLiveRequests?.liveRequests}
                     loading={loadingLiveRequests}
                 />
                 <Divider orientation="vertical" />
                 <RequestsDisplay
+                    key={props.client.clientId + "live-blocked"}
                     header="Live blocked requests"
                     data={dataBlockedRequests?.blockedRequests}
                     loading={loadingBlockedRequests}
