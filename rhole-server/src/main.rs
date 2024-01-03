@@ -10,6 +10,7 @@ mod utils;
 
 use anyhow::Result;
 use clap::Parser;
+use log::warn;
 use models::Opts;
 use rhole_server::RholeServer;
 
@@ -29,6 +30,11 @@ async fn main() -> Result<()> {
 
     let f = File::open(&opts.config_path).await?;
     let config: ServerConfig = serde_yaml::from_reader(f.into_std().await)?;
+
+    // Warning about all keys that are not unsupported
+    for remaining_key in config.extra_args.keys() {
+        warn!("Unrecognized key {remaining_key} in server configuration file...");
+    }
 
     RholeServer::run(opts, config).await
 }

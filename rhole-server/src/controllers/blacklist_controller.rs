@@ -8,6 +8,7 @@ use std::convert::TryFrom;
 
 use super::{DatabaseController, NetworkController, WatcherController};
 
+#[derive(Clone)]
 pub struct BlacklistController {
     db_controller: DatabaseController,
     blocked_requests_controller: WatcherController<Option<BlockedRequest>, i32>,
@@ -24,11 +25,7 @@ impl BlacklistController {
         }
     }
 
-    pub async fn init_from_sources(
-        sources: &[SourceEntry],
-        db_controller: DatabaseController,
-        blocked_requests_controller: WatcherController<Option<BlockedRequest>, i32>,
-    ) -> Result<Self> {
+    pub async fn init_from_sources(&self, sources: &[SourceEntry]) -> Result<()> {
         log::debug!("Received {} source(s)...", sources.len());
 
         let network_controller = NetworkController::new();
@@ -72,7 +69,8 @@ impl BlacklistController {
                 blacklisted_domains.push(rev_address);
             }
 
-            match db_controller
+            match self
+                .db_controller
                 .init_blocked_domains(blacklisted_domains)
                 .await
             {
@@ -84,10 +82,7 @@ impl BlacklistController {
             }
         }
 
-        Ok(Self {
-            db_controller,
-            blocked_requests_controller,
-        })
+        Ok(())
     }
 
     pub async fn is_domain_blacklisted<I>(&self, domain_address: I) -> Result<Option<i32>>

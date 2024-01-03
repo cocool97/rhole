@@ -1,4 +1,4 @@
-use std::{io::BufReader, sync::Arc, time::SystemTime};
+use std::{io::BufReader, process::exit, sync::Arc, time::SystemTime};
 
 use anyhow::{anyhow, Result};
 use async_graphql::{EmptyMutation, Schema};
@@ -40,20 +40,20 @@ impl RholeServer {
         let blocked_requests_controller = WatcherController::new();
         let live_requests_controller = WatcherController::new();
 
-        let blacklist_controller = match opts.no_update_db {
-            true => BlacklistController::new(
-                database_controller.clone(),
-                blocked_requests_controller.clone(),
-            ),
-            false => {
-                BlacklistController::init_from_sources(
-                    &config.sources.entries,
-                    database_controller.clone(),
-                    blocked_requests_controller.clone(),
-                )
-                .await?
-            }
-        };
+        let blacklist_controller = BlacklistController::new(
+            database_controller.clone(),
+            blocked_requests_controller.clone(),
+        );
+
+        if !opts.no_update_db {
+            // no_update_db is not set, we can update database entries
+            // Spawns a task responsible of adding blacklist entries to database
+            tokio::spawn({
+                let bl = blacklist_controller.clone();
+                let entries = config.sources.entries.to_owned();
+                async move { bl.init_from_sources(&entries).await }
+            });
+        }
 
         let dns_socket = UdpSocket::bind(opts.dns_addr).await?;
 
@@ -70,7 +70,13 @@ impl RholeServer {
         );
         server.register_socket(dns_socket);
 
-        tokio::spawn(async move { server.block_until_done().await });
+        tokio::spawn(async move {
+            info!("DNS server up and running...");
+            if let Err(e) = server.block_until_done().await {
+                error!("{e}");
+                exit(-1);
+            }
+        });
 
         let graphql_state = GraphQLState {
             start_time,
