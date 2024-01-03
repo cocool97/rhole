@@ -8,8 +8,16 @@ pub struct Opts {
     #[clap(short = 'd', long = "debug", env = "DEBUG")]
     pub debug: bool,
     /// Path to server configuration file
-    #[clap(short = 'c', long = "config", env = "CONFIG_PATH")]
+    #[clap(
+        short = 'c',
+        long = "config",
+        env = "CONFIG_PATH",
+        default_value = "/etc/rhole/config.yml"
+    )]
     pub config_path: PathBuf,
+    /// DNS server cache size
+    #[clap(env = "CACHE_SIZE")]
+    pub cache_size: Option<usize>,
     /// DNS server listening address
     #[clap(long = "dns-addr", env = "DNS_ADDR", default_value = "0.0.0.0:53")]
     pub dns_addr: SocketAddr,

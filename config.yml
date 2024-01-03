@@ -1,8 +1,9 @@
+cache_size: 4096
 database_path: /etc/rhole/data/rhole.db
 # tls:
 #   certificate_path: /etc/rhole/ssl/crt.pem
 #   pkey_path: /etc/rhole/ssl/key.pem
-html_dir: "index.html"
+html_dir: "/etc/rhole/dist"
 proxy_server:
   ip: "1.1.1.1"
   port: 853
@@ -16,14 +17,3 @@ sources:
     - source_type: !Network
       location: http://sbc.io/hosts/alternates/fakenews-gambling-porn/hosts
       comment: Remote hosts file
-net:
-  dns:
-    listen_addr: "0.0.0.0"
-    listen_port: 53
-  dot:
-    listen_addr: "0.0.0.0"
-    listen_port: 853
-    timeout: 2
-  web_interface:
-    listen_addr: "0.0.0.0"
-    listen_port: 443

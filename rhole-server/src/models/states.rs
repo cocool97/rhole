@@ -18,6 +18,6 @@ pub struct GraphQLState {
     pub config: ServerConfig,
     pub database_controller: DatabaseController,
     pub start_time: SystemTime,
-    pub blocked_requests_controller: WatcherController<Option<BlockedRequest>, u32>,
-    pub live_requests_controller: WatcherController<Option<LiveRequest>, u32>,
+    pub blocked_requests_controller: WatcherController<Option<BlockedRequest>, i32>,
+    pub live_requests_controller: WatcherController<Option<LiveRequest>, i32>,
 }

@@ -3,7 +3,7 @@ authors.workspace = true
 description = "Rust local DNS adblocker"
 edition.workspace = true
 license.workspace = true
-name = "rhole"
+name = "rhole-server"
 readme = "README.md"
 repository.workspace = true
 version.workspace = true
@@ -17,6 +17,7 @@ axum = { version = "0.6.20" }
 axum-server = { version = "0.5.1", features = ["tls-rustls"] }
 bytes = { version = "1.4.0" }
 clap = { version = "4.2.10", features = ["derive", "env"] }
+entity = { path = "../entity" }
 env_logger = { version = "0.10.0" }
 futures = { version = "0.3.25" }
 hickory-client = { version = "0.24.0" }
@@ -27,6 +28,7 @@ hickory-resolver = { version = "0.24.0", features = [
 hickory-server = { version = "0.24.0", features = ["dns-over-rustls"] }
 humantime = { version = "2.1.0" }
 log = { version = "0.4.17" }
+migration = { path = "../migration" }
 regex = { version = "1.7.1" }
 reqwest = { version = "0.11.14", default-features = false, features = [
     "rustls-tls",
@@ -34,6 +36,10 @@ reqwest = { version = "0.11.14", default-features = false, features = [
 rustls = { version = "0.21.9", features = ["tls12"] }
 rustls-pemfile = { version = "2.0.0" }
 rustls-pki-types = { version = "1.0.0" }
+sea-orm = { version = "0.12.10", features = [
+    "runtime-tokio",
+    "sqlx-sqlite",
+] }
 serde = { version = "1.0.163", features = ["derive"] }
 serde_yaml = { version = "0.9.17" }
 sqlx = { version = "0.7.3", features = ["runtime-tokio", "sqlite"] }

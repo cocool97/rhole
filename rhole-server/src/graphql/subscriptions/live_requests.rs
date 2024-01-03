@@ -10,7 +10,7 @@ impl LiveRequestsSubscription {
     async fn live_requests<'ctx>(
         &self,
         ctx: &Context<'ctx>,
-        client_id: Option<u32>,
+        client_id: Option<i32>,
     ) -> impl Stream<Item = Option<LiveRequest>> {
         let receiver = ctx
             .data_unchecked::<GraphQLState>()

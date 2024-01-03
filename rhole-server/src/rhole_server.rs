@@ -60,7 +60,7 @@ impl RholeServer {
         let mut server = ServerFuture::new(
             RequestsController::new(
                 config.proxy_server.clone(),
-                config.cache_size,
+                opts.cache_size,
                 blacklist_controller,
                 &config.local_hosts,
                 live_requests_controller.clone(),

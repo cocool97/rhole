@@ -1,4 +1,4 @@
-use crate::{api_models::client::Client, models::GraphQLState};
+use crate::models::{Client, GraphQLState};
 use anyhow::{anyhow, Result};
 use async_graphql::{Context, Object};
 use log::error;
