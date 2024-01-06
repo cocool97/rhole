@@ -7,10 +7,3 @@ export const CLIENTS_QUERY = gql`query {
         lastSeen
     }
 }`;
-
-export const INFOS_QUERY = gql`query {
-    infos {
-        uptime
-        buildVersion
-    }
-}`;

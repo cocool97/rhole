@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use log::error;
+use log::{debug, error};
 use tokio::sync::{
     watch::{Receiver, Sender},
     Mutex,
@@ -42,14 +42,14 @@ impl<T: Clone + Default, I: PartialEq> WatcherController<T, I> {
         let mut uuid_to_remove = vec![];
         for (uuid, (watcher_client_id, sender)) in &*self.watchers.lock().await {
             if sender.is_closed() {
-                error!("Channel {uuid} has been closed...");
+                debug!("Channel {uuid} has been closed...");
                 uuid_to_remove.push(*uuid);
                 continue;
             }
 
             // Only notifying is no client_id is specified or if we are handling asked client_id
             if watcher_client_id.is_none() || *watcher_client_id == client_id {
-                log::debug!("Notifying watcher {uuid}...");
+                debug!("Notifying watcher {uuid}...");
                 if let Err(e) = sender.send(value.clone()) {
                     error!("Error while notifying watcher {uuid}: {e}");
                     uuid_to_remove.push(*uuid);

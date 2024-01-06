@@ -76,7 +76,7 @@ impl BlacklistController {
             {
                 Ok(entries_added) => {
                     log::info!("Initialization finished...");
-                    log::info!("Found {} addresses to blacklist...", entries_added);
+                    log::info!("Found {} more addresses to blacklist...", entries_added);
                 }
                 Err(e) => log::error!("{}", e),
             }

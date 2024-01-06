@@ -21,6 +21,7 @@ impl MigrationTrait for Migration {
                     .col(
                         ColumnDef::new(BlockedDomains::DomainAddress)
                             .string()
+                            .unique_key()
                             .not_null(),
                     )
                     .col(

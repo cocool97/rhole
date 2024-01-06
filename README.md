@@ -31,6 +31,19 @@ All these methods require using `rhole` as a primary DNS server. This setup will
 
 It is therefore recommended to set the server IP directly in your DHCP server configuration as `option domain-name-servers` to automatically inject this server to all clients configured via DHCP.
 
+### Configuration variables
+
+Many things may be configured with `rhole`. Some of these things are configurable using environment variables, other using a yaml configuration file.
+
+You can find here the available environment variables:
+
+| Environment variable |  What can be configured  |
+|:--------------------:|:------------------------:|
+|        DEBUG         |     Enable debug mode    |
+|      CACHE_SIZE      | Increase DNS cache size  |
+|       DNS_ADDR       |    Listen DNS address    |
+|       WEB_ADDR       |    Listen WEB address    |
+
 ### Using Docker / Podman
 
 A `Dockerfile` is provided to ease setup.

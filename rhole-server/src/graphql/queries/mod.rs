@@ -1,19 +1,19 @@
 mod blocked_domains;
 mod blocked_requests;
 mod clients;
-mod infos;
+mod server_infos;
 
 pub use blocked_domains::BlockedDomainsQuery;
 pub use blocked_requests::BlockedRequestsQuery;
 pub use clients::ClientsQuery;
-pub use infos::InfosQuery;
+pub use server_infos::ServerInfosQuery;
 
 use async_graphql::MergedObject;
 
 #[derive(MergedObject, Default)]
 pub struct RholeQueries(
     ClientsQuery,
-    InfosQuery,
+    ServerInfosQuery,
     BlockedRequestsQuery,
     BlockedDomainsQuery,
 );
