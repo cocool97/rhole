@@ -5,12 +5,12 @@ use humantime::format_duration;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq, SimpleObject)]
-pub struct Infos {
+pub struct ServerInfos {
     pub uptime: String,
     pub build_version: &'static str,
 }
 
-impl Infos {
+impl ServerInfos {
     pub fn new(duration: Duration) -> Self {
         Self {
             uptime: format_duration(duration).to_string(),

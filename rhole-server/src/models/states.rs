@@ -1,8 +1,8 @@
-use async_graphql::{EmptyMutation, Schema};
+use async_graphql::Schema;
 
 use crate::api_models::{BlockedRequest, LiveRequest};
 use crate::controllers::{DatabaseController, WatcherController};
-use crate::graphql::{RholeQueries, RholeSubscriptions};
+use crate::graphql::{RholeMutations, RholeQueries, RholeSubscriptions};
 use std::path::PathBuf;
 use std::time::SystemTime;
 
@@ -10,7 +10,7 @@ use super::ServerConfig;
 
 #[derive(Clone)]
 pub struct RouterState {
-    pub graphql_schema: Schema<RholeQueries, EmptyMutation, RholeSubscriptions>,
+    pub graphql_schema: Schema<RholeQueries, RholeMutations, RholeSubscriptions>,
     pub html_dir: PathBuf,
 }
 

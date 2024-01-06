@@ -12,9 +12,9 @@ proxy_server:
 sources:
   update_interval: 5
   entries:
-    # - source_type: !File
-      # location: hosts.txt
-      # comment: Global hosts file
+    - source_type: !File
+      location: hosts.txt
+      comment: Global hosts file
     # - source_type: !Network
-    # location: http://sbc.io/hosts/alternates/fakenews-gambling-porn/hosts
-    # comment: Remote hosts file
+    #   location: http://sbc.io/hosts/alternates/fakenews-gambling-porn/hosts
+    #   comment: Remote hosts file

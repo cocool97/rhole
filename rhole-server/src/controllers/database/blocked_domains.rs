@@ -1,7 +1,12 @@
+use anyhow::anyhow;
 use entity::blocked_domains::ActiveModel as BlockedDomainActiveModel;
+use entity::blocked_domains::Column as BlockedDomainColumn;
 use entity::blocked_domains::Entity as BlockedDomainEntity;
 use log::error;
 use sea_orm::ActiveModelTrait;
+use sea_orm::FromQueryResult;
+use sea_orm::PaginatorTrait;
+use sea_orm::TransactionTrait;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use super::DatabaseController;
@@ -29,9 +34,13 @@ impl DatabaseController {
         Ok(())
     }
 
-    pub async fn get_blocked_domains(&self, num: Option<u64>) -> Result<Vec<BlockedDomain>> {
+    pub async fn get_blocked_domains(
+        &self,
+        page: i32,
+        page_size: i32,
+    ) -> Result<Vec<BlockedDomain>> {
         let blocked_domains = BlockedDomainEntity::find()
-            .limit(num)
+            .filter(BlockedDomainColumn::Id.between(1 + page * page_size, (page + 1) * page_size))
             .all(&self.connection)
             .await?;
 
@@ -63,27 +72,12 @@ impl DatabaseController {
         }
     }
 
-    // pub async fn is_domain_blacklisted<S: AsRef<str>>(&self, domain: S) -> Result<Option<i32>> {
-    //     let opt_domain = BlockedDomainEntity::find()
-    //         .distinct()
-    //         .filter(entity::blocked_domains::Column::DomainAddress.eq(domain.as_ref()))
-    //         .filter(entity::blocked_domains::Column::Whitelisted.eq(false))
-    //         .one(&self.connection)
-    //         .await?;
-
-    //     match opt_domain {
-    //         Some(d) => Ok(Some(d.id)),
-    //         None => Ok(None),
-    //     }
-    // }
-
     pub async fn init_blocked_domains(&self, blocked_domains: Vec<String>) -> Result<u64> {
         let mut entries_added = 0;
 
         for domain in blocked_domains {
-            match self.insert_blocked_domain(domain).await {
-                Ok(_) => entries_added += 1,
-                Err(e) => log::error!("{}", e),
+            if self.insert_blocked_domain(domain).await.is_ok() {
+                entries_added += 1;
             }
         }
 
@@ -104,11 +98,58 @@ impl DatabaseController {
             whitelisted: ActiveValue::Set(false),
         };
 
-        BlockedDomainEntity::insert(domain)
-            .do_nothing()
-            .exec_without_returning(&self.connection)
+        // Execute it in a transaction as it'll rollback if an error occurred
+        // (and in particularly if already existing)
+        self.connection
+            .transaction(move |db| {
+                Box::pin(BlockedDomainEntity::insert(domain).exec_without_returning(db))
+            })
             .await?;
 
         Ok(())
+    }
+
+    pub async fn set_domain_whitelist_status(
+        &self,
+        domain_id: i32,
+        whitelisted: bool,
+    ) -> Result<()> {
+        let domain = BlockedDomainActiveModel {
+            id: ActiveValue::Unchanged(domain_id),
+            domain_address: ActiveValue::NotSet,
+            insert_timestamp: ActiveValue::NotSet,
+            blocked_count: ActiveValue::NotSet,
+            whitelisted: ActiveValue::Set(whitelisted),
+        };
+
+        BlockedDomainEntity::update(domain)
+            .exec(&self.connection)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn get_blocked_domains_entries_count(&self) -> Result<u64> {
+        Ok(BlockedDomainEntity::find()
+            .distinct()
+            .count(&self.connection)
+            .await?)
+    }
+
+    pub async fn get_blocked_domains_sum(&self) -> Result<i64> {
+        #[derive(FromQueryResult)]
+        struct Sum {
+            sum: i64,
+        }
+
+        let a = BlockedDomainEntity::find()
+            .select_only()
+            .column_as(BlockedDomainColumn::BlockedCount.sum(), "sum")
+            .into_model::<Sum>()
+            .one(&self.connection)
+            .await?;
+
+        Ok(a.ok_or(anyhow!("Could not get sum of blocked domains"))?
+            .sum)
     }
 }

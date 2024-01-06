@@ -1,7 +1,7 @@
 use std::{io::BufReader, process::exit, sync::Arc, time::SystemTime};
 
 use anyhow::{anyhow, Result};
-use async_graphql::{EmptyMutation, Schema};
+use async_graphql::Schema;
 use async_graphql_axum::GraphQLSubscription;
 use axum::{
     body::Body,
@@ -23,7 +23,7 @@ use tower_http::services::{ServeDir, ServeFile};
 
 use crate::{
     controllers::{BlacklistController, DatabaseController, RequestsController, WatcherController},
-    graphql::{RholeQueries, RholeSubscriptions},
+    graphql::{RholeMutations, RholeQueries, RholeSubscriptions},
     handlers::{graphiql_playground, graphql},
     models::{GraphQLState, Opts, RouterState, ServerConfig},
 };
@@ -88,7 +88,7 @@ impl RholeServer {
 
         let graphql_schema = Schema::build(
             RholeQueries::default(),
-            EmptyMutation,
+            RholeMutations::default(),
             RholeSubscriptions::default(),
         )
         .data(graphql_state)
