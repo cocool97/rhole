@@ -113,7 +113,7 @@ impl RholeServer {
         match config.tls {
             None => {
                 axum_server::bind(opts.web_addr)
-                    .serve(router.into_make_service())
+                    .serve(router.into_make_service_with_connect_info::<std::net::SocketAddr>())
                     .await?;
             }
             Some(tls) => {
@@ -148,7 +148,7 @@ impl RholeServer {
                     opts.web_addr,
                     tls_config(&cert_chain, key.secret_pkcs8_der()).await?,
                 )
-                .serve(router.into_make_service())
+                .serve(router.into_make_service_with_connect_info::<std::net::SocketAddr>())
                 .await?;
             }
         }

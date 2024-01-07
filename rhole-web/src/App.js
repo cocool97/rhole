@@ -12,8 +12,10 @@ import { createClient } from "graphql-ws";
 import LiveBlockedRequests from "./Views/LiveRequests";
 import MainView from "./Components/MainView";
 import { Dashboard } from "./Views/MainPage";
+import { GET_OWN_CLIENT_ID } from "./queries/client";
 
 const App = () => {
+    const [clientId, setClientId] = React.useState(null);
     const httpLink = new HttpLink({
         uri: API_SCHEME + API_DOMAIN + API_ROUTE + "/graphql"
 
@@ -45,6 +47,12 @@ const App = () => {
         cache: new InMemoryCache(),
     });
 
+    apolloClient
+        .query({
+            query: GET_OWN_CLIENT_ID,
+        })
+        .then((result) => setClientId(result.data.getOwnClientId));
+
     return (
         <ApolloProvider client={apolloClient}>
             <BrowserRouter>
@@ -61,7 +69,9 @@ const App = () => {
                         path="/clients"
                         element={
                             <MainView>
-                                <Clients />
+                                <Clients
+                                    ownClientId={clientId}
+                                />
                             </MainView>
                         }
                     />
@@ -77,7 +87,9 @@ const App = () => {
                         path="/blocked"
                         element={
                             <MainView>
-                                <BlockedRequests />
+                                <BlockedRequests
+                                    ownClientId={clientId}
+                                />
                             </MainView>
                         }
                     />
@@ -85,7 +97,9 @@ const App = () => {
                         path="/realtime"
                         element={
                             <MainView>
-                                <LiveBlockedRequests />
+                                <LiveBlockedRequests
+                                    ownClientId={clientId}
+                                />
                             </MainView>
                         }
                     />
