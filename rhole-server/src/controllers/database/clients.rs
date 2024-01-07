@@ -50,9 +50,9 @@ impl DatabaseController {
         Ok(clients.into_iter().map(Into::into).collect())
     }
 
-    pub async fn get_client_from_addr(&self, addr: String) -> Result<Option<Client>> {
+    pub async fn get_client_from_addr<S: ToString>(&self, addr: S) -> Result<Option<Client>> {
         Ok(ClientEntity::find()
-            .filter(ClientColumn::Address.eq(addr))
+            .filter(ClientColumn::Address.eq(addr.to_string()))
             .one(&self.connection)
             .await
             .map(|m| m.map(Into::into))?)

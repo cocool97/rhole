@@ -3,8 +3,9 @@ import { useSubscription } from "@apollo/client";
 import { DataGrid } from '@mui/x-data-grid';
 import { timestampToDate } from "../utils";
 import { LIVE_REQUESTS_SUBSCRIPTION } from "../queries/live_requests";
+import { RenderOwnIdCell } from "../Components/RenderOwnIdCell";
 
-function LiveBlockedRequestsDisplay({ loading, data }) {
+function LiveBlockedRequestsDisplay({ ownClientId, loading, data }) {
     const [liveRequests, setLiveRequests] = React.useState([]);
 
     useEffect(() => {
@@ -20,21 +21,29 @@ function LiveBlockedRequestsDisplay({ loading, data }) {
             headerName: "Request Address",
             editable: false,
             sortable: true,
-            flex: 1
+            flex: 2,
+        },
+        {
+            field: "clientId",
+            headerName: "Client ID",
+            editable: false,
+            sortable: true,
+            flex: 1,
+            renderCell: (props) => RenderOwnIdCell(props.row.clientId, props.row.clientId, ownClientId)
         },
         {
             field: 'clientAddress',
             headerName: "Client Address",
             editable: false,
             sortable: true,
-            flex: 1
+            flex: 2
         },
         {
             field: 'timestamp',
             headerName: "Date",
             editable: false,
             sortable: true,
-            flex: 1
+            flex: 2
         }
     ];
 
@@ -50,13 +59,14 @@ function LiveBlockedRequestsDisplay({ loading, data }) {
     )
 }
 
-const LiveBlockedRequests = () => {
+const LiveBlockedRequests = (props) => {
     const { data, loading } = useSubscription(LIVE_REQUESTS_SUBSCRIPTION, {
         variables: { clientId: null }
     });
 
     return (
         <LiveBlockedRequestsDisplay
+            ownClientId={props.ownClientId}
             loading={loading}
             data={data}
         />

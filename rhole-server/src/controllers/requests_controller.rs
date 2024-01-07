@@ -185,6 +185,7 @@ impl RequestsController {
                     client_address: client_ip.to_string(),
                     request_address: query_question,
                     timestamp: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs_f64(),
+                    client_id: client.client_id,
                 }),
                 Some(client.client_id),
             )

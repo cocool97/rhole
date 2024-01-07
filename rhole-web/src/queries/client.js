@@ -7,3 +7,8 @@ export const CLIENTS_QUERY = gql`query {
         lastSeen
     }
 }`;
+
+export const GET_OWN_CLIENT_ID = gql`
+query {
+    getOwnClientId
+}`

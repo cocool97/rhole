@@ -6,5 +6,6 @@ export const LIVE_REQUESTS_SUBSCRIPTION = gql`subscription LiveRequests($clientI
     clientAddress
     requestAddress
     timestamp
+    clientId
   }
 }`;

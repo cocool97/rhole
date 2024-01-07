@@ -5,10 +5,11 @@ import { Box, Divider, List, ListItemAvatar, ListItemButton, ListItemText, ListS
 import PermIdentityIcon from '@mui/icons-material/PermIdentity';
 import { useSearchParams } from "react-router-dom";
 import { ClientInformations } from "./ClientInformations";
+import { RenderOwnIdCell } from "../Components/RenderOwnIdCell";
 
 const CLIENT_ID_PARAM_NAME = "client_id";
 
-const Clients = () => {
+const Clients = (props) => {
     const { loading, error, data } = useQuery(CLIENTS_QUERY);
     const [searchParams, setSearchParams] = useSearchParams();
     const [currentClient, setCurrentClient] = React.useState(null);
@@ -63,6 +64,7 @@ const Clients = () => {
                             <ClientListItem
                                 key={client.clientId}
                                 client={client}
+                                ownClientId={props.ownClientId}
                                 setCurrentClient={setCurrentClient}
                                 setSearchParams={setSearchParams}
                             />
@@ -92,9 +94,13 @@ const ClientListItem = (props) => {
                 <ListItemAvatar>
                     <PermIdentityIcon />
                 </ListItemAvatar>
-                <ListItemText
-                    primary={props.client.address}
-                />
+                {RenderOwnIdCell(
+                    <ListItemText
+                        primary={props.client.address}
+                    />,
+                    props.client.clientId,
+                    props.ownClientId
+                )}
             </ListItemButton>
             <Divider />
         </React.Fragment>
