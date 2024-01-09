@@ -13,7 +13,6 @@ const MainView = (props) => {
     return (
         <Box sx={{ display: 'flex', maxHeight: '100vh', height: '100vh' }}>
             <RholeAppBar
-                open={open}
                 handleDrawerClick={handleDrawerClick}
             />
             <RholeDrawer open={open} />

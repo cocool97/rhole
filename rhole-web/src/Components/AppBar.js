@@ -41,7 +41,7 @@ const RholeAppBar = (props) => {
                         marginRight: 5,
                     }}
                 >
-                    {props.open ? <ChevronLeftIcon /> : <MenuIcon />}
+                    <MenuIcon />
                 </IconButton>
                 <Link to="/" style={{ color: 'inherit', textDecoration: 'inherit' }}>
                     <Typography variant="h6" noWrap component="div">

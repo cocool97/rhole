@@ -1,57 +1,71 @@
 import React from "react";
 import { useQuery } from "@apollo/client";
-import { Box, List, ListItem, ListItemIcon, ListItemText, Typography } from "@mui/material";
+import { Avatar, Box, Typography } from "@mui/material";
 import SettingsIcon from '@mui/icons-material/Settings';
 import TimerIcon from '@mui/icons-material/Timer';
 import NumbersIcon from '@mui/icons-material/Numbers';
 import DoNotDisturbOnTotalSilenceIcon from '@mui/icons-material/DoNotDisturbOnTotalSilence';
 import { DASHBOARD_QUERY } from "../queries/server_infos";
 
+const DASHBOARD_POLL_INTERVAL = 10;
+
 export const Dashboard = () => {
-    const { loading, data } = useQuery(DASHBOARD_QUERY);
+    const { loading, data } = useQuery(DASHBOARD_QUERY, {
+        pollInterval: DASHBOARD_POLL_INTERVAL * 1000
+    });
 
     return (
         <Box
-            display="grid"
-            gridTemplateColumns="repeat(3, 1fr)"
-            rowGap="10px"
+            display="flex"
+            flexWrap="wrap"
+            alignContent="baseline"
             columnGap="10px"
+            rowGap="10px"
+            justifyContent="space-around"
         >
             <MainPageElement
-                title="Server informations"
                 loading={loading}
-                data={[
+                data={
                     {
                         "name": "Uptime",
                         "value": data?.serverInfos.uptime,
                         "icon": <TimerIcon />
-                    },
+                    }} />
+            <MainPageElement
+                loading={loading}
+                data={
                     {
                         "name": "Version",
                         "value": data?.serverInfos.buildVersion,
                         "icon": <SettingsIcon />
                     }
-                ]} />
+                } />
             <MainPageElement
-                title="Blacklist statistics"
                 loading={loading}
-                data={[
+                data={
                     {
                         "name": "Domains in blacklist",
                         "value": data?.blacklistInfos.count,
                         "icon": <NumbersIcon />
-                    },
+                    }} />
+            <MainPageElement
+                loading={loading}
+                data={
                     {
                         "name": "Overall total blocked domains",
                         "value": data?.blacklistInfos.total,
                         "icon": <DoNotDisturbOnTotalSilenceIcon />
-                    },
+                    }
+                } />
+            <MainPageElement
+                loading={loading}
+                data={
                     {
                         "name": "Blacklist sources",
                         "value": data?.blacklistInfos.nbSources,
                         "icon": <NumbersIcon />
                     }
-                ]} />
+                } />
         </Box>
     )
 }
@@ -61,27 +75,31 @@ const MainPageElement = (props) => {
         <Box
             display="flex"
             sx={{
-                border: "1px black solid", borderRadius: "30px", "& > *": {
+                border: "1px black solid", borderRadius: "10px", "& > *": {
                     width: "100%"
                 }
             }}
             padding="20px"
-            flexDirection="column"
-            height="fit-content"
+            flexDirection="row"
+            height="70px"
+            width="400px"
         >
-            <Typography textAlign="center" height="fit-content" component="h5" fontWeight="bold" fontSize={20}>{props.title}</Typography>
-            <Box>
-                <List>
-                    {props.data.map((element, index) => {
-                        return (<ListItem key={index}>
-                            <ListItemIcon>
-                                {element.icon}
-                            </ListItemIcon>
-                            <ListItemText primary={element.name} />
-                            {props.loading ? <Typography textAlign={"end"}>Loading...</Typography> : <ListItemText primary={element.value} sx={{ textAlign: "end" }} />}
-                        </ListItem>)
-                    })}
-                </List>
+            <Box
+                display="flex"
+                flexDirection="column"
+                width="auto"
+                justifyContent="center"
+                alignItems="center"
+            >
+                <Avatar sx={{ marginBottom: "5px", bgcolor: "#1976d2" }}>{props.data.icon}</Avatar>
+                <Typography fontSize={18} fontWeight="bold" sx={{ textAlign: "center", color: "#1976d2" }}>{props.data.name}</Typography>
+            </Box>
+            <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+            >
+                {<Typography sx={{ textAlign: "center" }}>{props.loading ? "Loading..." : props.data.value}</Typography>}
             </Box>
         </Box>
     )

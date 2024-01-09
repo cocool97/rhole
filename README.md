@@ -5,7 +5,7 @@
 
 rhole is a fully open-source and community Rust / ReactJS project aiming to empower your privacy, by providing an easy-to-setup DNS server.
 
-It is focused on **<ins>performance</ins>** and **<ins>usability</ins>** to be as transparent as possible on your network.
+It is focused on **performance** and **usability** to be as transparent as possible on your network.
 
 With rhole you will be able to :
 
@@ -40,13 +40,52 @@ You can find here the available environment variables:
 | Environment variable |  What can be configured  |
 |:--------------------:|:------------------------:|
 |        DEBUG         |     Enable debug mode    |
+|      CONFIG_PATH     |Path to configuration file|
+|     DATABASE_PATH    |  Path to rhole database  |
+|        HTML_DIR      |Path to HTML code directory|
 |      CACHE_SIZE      | Increase DNS cache size  |
 |       DNS_ADDR       |    Listen DNS address    |
 |       WEB_ADDR       |    Listen WEB address    |
 
-### Using Docker / Podman
+### Configuration file
+
+Currently a configuration file is needed as well as the previous environment variables to configure `rhole`. The path to this configuration file can be configured using the `CONFIG_PATH` environment variable.
+
+This will be temporary and will be replace by a configuration directly in the WEB UI.
+
+Here is the required configuration format under YAML :
+
+```yaml
+# Configure TLS directly on rhole server
+# tls:
+#   certificate_path: /etc/rhole/ssl/crt.pem
+#   pkey_path: /etc/rhole/ssl/key.pem
+
+# Server on which to recurse for DNS queries (with DOH)
+proxy_server:
+  ip: "1.1.1.1"
+  port: 853
+  tls_dns_name: cloudflare-dns.com
+
+# Blacklist sources
+sources:
+  update_interval: 5
+  entries:
+    # - source_type: !File
+    #   location: hosts.txt
+    #   comment: Global hosts file
+    - source_type: !Network
+      location: http://sbc.io/hosts/alternates/fakenews-gambling-porn/hosts
+      comment: Remote hosts file
+```
+
+## Deployment
+
+### Using containers: Docker / Podman
 
 A `Dockerfile` is provided to ease setup.
+
+The previous environment variables can be mounted in Docker image using `-e VAR=VALUE` flag (many times if needed).
 
 ```bash
 docker build -t rhole:latest -f Dockerfile .
@@ -58,7 +97,6 @@ docker run \
   -v data:/etc/rhole/data:rw,z \ # rhole data directory, containing database
   -p 53:53/udp \
   -p 443:443/tcp \
-  -e CONFIG_PATH="/etc/rhole/config.yml" \
   -e DNS_ADDR="0.0.0.0:53" \
   -e WEB_ADDR="0.0.0.0:443" \
   -e DEBUG=1 \
@@ -71,16 +109,8 @@ TODO
 
 ## How to use it ?
 
-### Write initial configuration file
-
-- Will not be mandatory after
-
-TODO
-
 ### Access WEB UI
 
-TODO
+`rhole` hosts an administration interface useful to follow global or per-client live trafic, monitor blacklisted domains or display server logs. This interface can be accessed by default on 0.0.0.0:443, but this can be configured using the `WEB_ADDR` environment variable.
 
-- URL
-- Screen(s)
-- Add license
+I'm definitely not a web developer, so this interface is currently in its beta form. Pull requests are welcome to improve UI or UX, or make the ReactJS code closer to best practices !

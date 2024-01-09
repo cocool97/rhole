@@ -142,14 +142,15 @@ impl DatabaseController {
             sum: i64,
         }
 
-        let a = BlockedDomainEntity::find()
+        let opt_sum = BlockedDomainEntity::find()
             .select_only()
             .column_as(BlockedDomainColumn::BlockedCount.sum(), "sum")
             .into_model::<Sum>()
             .one(&self.connection)
             .await?;
 
-        Ok(a.ok_or(anyhow!("Could not get sum of blocked domains"))?
+        Ok(opt_sum
+            .ok_or(anyhow!("Could not get sum of blocked domains"))?
             .sum)
     }
 }

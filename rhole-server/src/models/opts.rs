@@ -15,6 +15,10 @@ pub struct Opts {
         default_value = "/etc/rhole/config.yml"
     )]
     pub config_path: PathBuf,
+    #[clap(env = "DATABASE_PATH", default_value = "/etc/rhole/rhole.db")]
+    pub database_path: String,
+    #[clap(env = "HTML_DIR", default_value = "/etc/rhole/web")]
+    pub html_directory: PathBuf,
     /// DNS server cache size
     #[clap(env = "CACHE_SIZE")]
     pub cache_size: Option<usize>,

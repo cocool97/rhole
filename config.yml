@@ -1,8 +1,6 @@
-database_path: /etc/rhole/data/rhole.db
 # tls:
 #   certificate_path: /etc/rhole/ssl/crt.pem
 #   pkey_path: /etc/rhole/ssl/key.pem
-html_dir: "/etc/rhole/dist"
 proxy_server:
   ip: "1.1.1.1"
   port: 853

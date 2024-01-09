@@ -3,9 +3,8 @@ import { useQuery } from "@apollo/client";
 import { DataGrid } from '@mui/x-data-grid';
 import { BLOCKED_REQUESTS_QUERY, BLOCKED_REQUESTS_SUBSCRIPTION } from "../queries/blocked_requests";
 import { timestampToDate } from "../utils";
-import { RenderOwnIdCell } from "../Components/RenderOwnIdCell";
 
-function BlockedRequestsDisplay({ ownClientId, loading, updateCallback, data }) {
+function BlockedRequestsDisplay({ loading, updateCallback, data }) {
     const columns = [
         {
             field: 'requestId',
@@ -20,7 +19,6 @@ function BlockedRequestsDisplay({ ownClientId, loading, updateCallback, data }) 
             editable: false,
             sortable: true,
             flex: 1,
-            renderCell: (props) => RenderOwnIdCell(props.row.clientId, props.row.clientId, ownClientId)
         },
         {
             field: 'requestAddress',
@@ -54,7 +52,7 @@ function BlockedRequestsDisplay({ ownClientId, loading, updateCallback, data }) 
     )
 }
 
-const BlockedRequests = (props) => {
+const BlockedRequests = () => {
     const { subscribeToMore, loading, error, data } = useQuery(BLOCKED_REQUESTS_QUERY);
 
     const updateCallback = subscribeToMore({
@@ -81,7 +79,6 @@ const BlockedRequests = (props) => {
 
     return (
         <BlockedRequestsDisplay
-            ownClientId={props.ownClientId}
             loading={loading}
             updateCallback={updateCallback}
             data={data}

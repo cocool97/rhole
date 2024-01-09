@@ -57,4 +57,19 @@ impl DatabaseController {
             .await
             .map(|m| m.map(Into::into))?)
     }
+
+    pub async fn set_client_alias(&self, client_id: i32, alias: String) -> Result<()> {
+        let model = ClientActiveModel {
+            id: ActiveValue::Unchanged(client_id),
+            address: ActiveValue::NotSet,
+            alias: ActiveValue::Set(Some(alias)),
+            last_seen: ActiveValue::NotSet,
+        };
+        let _ = ClientEntity::update(model)
+            .filter(ClientColumn::Id.eq(client_id))
+            .exec(&self.connection)
+            .await?;
+
+        Ok(())
+    }
 }
