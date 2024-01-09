@@ -35,7 +35,7 @@ impl RholeServer {
         let start_time = SystemTime::now();
         info!("DNS server listening on {}", opts.dns_addr);
         info!("Web server listening on {}", opts.web_addr);
-        let database_controller = DatabaseController::init_database(&config.database_path).await?;
+        let database_controller = DatabaseController::init_database(&opts.database_path).await?;
 
         let blocked_requests_controller = WatcherController::new();
         let live_requests_controller = WatcherController::new();
@@ -96,7 +96,7 @@ impl RholeServer {
 
         let router_state = RouterState {
             graphql_schema: graphql_schema.clone(),
-            html_dir: config.html_dir,
+            html_dir: opts.html_directory,
         };
 
         let api_router = Router::new()
@@ -113,7 +113,7 @@ impl RholeServer {
         match config.tls {
             None => {
                 axum_server::bind(opts.web_addr)
-                    .serve(router.into_make_service_with_connect_info::<std::net::SocketAddr>())
+                    .serve(router.into_make_service())
                     .await?;
             }
             Some(tls) => {
@@ -148,7 +148,7 @@ impl RholeServer {
                     opts.web_addr,
                     tls_config(&cert_chain, key.secret_pkcs8_der()).await?,
                 )
-                .serve(router.into_make_service_with_connect_info::<std::net::SocketAddr>())
+                .serve(router.into_make_service())
                 .await?;
             }
         }
@@ -168,8 +168,11 @@ async fn handle_webapp(
         .await
         .unwrap();
 
-    // Even if the page does not exist, we let the internal webapp router handle 404-Not Found pages
-    *response.status_mut() = StatusCode::OK;
+    // 404 pages are handled directly by SPA own router.
+    // We just return the default index.html file as 200 OK
+    if response.status() == StatusCode::NOT_FOUND {
+        *response.status_mut() = StatusCode::OK;
+    }
 
     response
 }

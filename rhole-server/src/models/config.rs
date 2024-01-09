@@ -5,15 +5,12 @@ use std::{
     collections::HashMap,
     fmt::Display,
     net::{AddrParseError, Ipv4Addr, SocketAddr, SocketAddrV4},
-    path::PathBuf,
     str::FromStr,
 };
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ServerConfig {
-    pub database_path: String,
     pub tls: Option<TlsConfig>,
-    pub html_dir: PathBuf,
     #[serde(default)]
     pub local_hosts: HashMap<String, Ipv4Addr>,
     pub proxy_server: ProxyServer,

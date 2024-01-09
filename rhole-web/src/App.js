@@ -12,10 +12,9 @@ import { createClient } from "graphql-ws";
 import LiveBlockedRequests from "./Views/LiveRequests";
 import MainView from "./Components/MainView";
 import { Dashboard } from "./Views/MainPage";
-import { GET_OWN_CLIENT_ID } from "./queries/client";
+import { ThemeProvider, createTheme } from "@mui/material";
 
 const App = () => {
-    const [clientId, setClientId] = React.useState(null);
     const httpLink = new HttpLink({
         uri: API_SCHEME + API_DOMAIN + API_ROUTE + "/graphql"
 
@@ -47,65 +46,73 @@ const App = () => {
         cache: new InMemoryCache(),
     });
 
-    apolloClient
-        .query({
-            query: GET_OWN_CLIENT_ID,
-        })
-        .then((result) => setClientId(result.data.getOwnClientId));
+    const theme = createTheme({
+        typography: {
+            fontFamily: [
+                '-apple-system',
+                'BlinkMacSystemFont',
+                '"Segoe UI"',
+                'Roboto',
+                '"Helvetica Neue"',
+                'Arial',
+                'sans-serif',
+                '"Apple Color Emoji"',
+                '"Segoe UI Emoji"',
+                '"Segoe UI Symbol"',
+            ].join(','),
+        },
+    });
+
 
     return (
-        <ApolloProvider client={apolloClient}>
-            <BrowserRouter>
-                <Routes>
-                    <Route
-                        path="/"
-                        element={
-                            <MainView>
-                                <Dashboard />
-                            </MainView>
-                        }
-                    />
-                    <Route
-                        path="/clients"
-                        element={
-                            <MainView>
-                                <Clients
-                                    ownClientId={clientId}
-                                />
-                            </MainView>
-                        }
-                    />
-                    <Route
-                        path="/domains"
-                        element={
-                            <MainView>
-                                <BlockedDomains />
-                            </MainView>
-                        }
-                    />
-                    <Route
-                        path="/blocked"
-                        element={
-                            <MainView>
-                                <BlockedRequests
-                                    ownClientId={clientId}
-                                />
-                            </MainView>
-                        }
-                    />
-                    <Route
-                        path="/realtime"
-                        element={
-                            <MainView>
-                                <LiveBlockedRequests
-                                    ownClientId={clientId}
-                                />
-                            </MainView>
-                        }
-                    />
-                </Routes>
-            </BrowserRouter>
-        </ApolloProvider>
+        <ThemeProvider theme={theme}>
+            <ApolloProvider client={apolloClient}>
+                <BrowserRouter>
+                    <Routes>
+                        <Route
+                            path="/"
+                            element={
+                                <MainView>
+                                    <Dashboard />
+                                </MainView>
+                            }
+                        />
+                        <Route
+                            path="/clients"
+                            element={
+                                <MainView>
+                                    <Clients />
+                                </MainView>
+                            }
+                        />
+                        <Route
+                            path="/domains"
+                            element={
+                                <MainView>
+                                    <BlockedDomains />
+                                </MainView>
+                            }
+                        />
+                        <Route
+                            path="/blocked"
+                            element={
+                                <MainView>
+                                    <BlockedRequests />
+                                </MainView>
+                            }
+                        />
+                        <Route
+                            path="/realtime"
+                            element={
+                                <MainView>
+                                    <LiveBlockedRequests />
+                                </MainView>
+                            }
+                        />
+                    </Routes>
+                </BrowserRouter>
+            </ApolloProvider>
+        </ThemeProvider>
     );
 }
 

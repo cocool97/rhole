@@ -5,15 +5,18 @@ import { Box, Divider, List, ListItemAvatar, ListItemButton, ListItemText, ListS
 import PermIdentityIcon from '@mui/icons-material/PermIdentity';
 import { useSearchParams } from "react-router-dom";
 import { ClientInformations } from "./ClientInformations";
-import { RenderOwnIdCell } from "../Components/RenderOwnIdCell";
 
 const CLIENT_ID_PARAM_NAME = "client_id";
+const CLIENTS_POLL_INTERVAL_SECS = 10;
 
-const Clients = (props) => {
-    const { loading, error, data } = useQuery(CLIENTS_QUERY);
+const Clients = () => {
+    const { loading, error, data } = useQuery(CLIENTS_QUERY, {
+        pollInterval: CLIENTS_POLL_INTERVAL_SECS * 1000,
+    });
     const [searchParams, setSearchParams] = useSearchParams();
     const [currentClient, setCurrentClient] = React.useState(null);
 
+    // To get current focused client
     useEffect(() => {
         const queryClient = searchParams.get(CLIENT_ID_PARAM_NAME);
         if (queryClient && data) {
@@ -64,7 +67,6 @@ const Clients = (props) => {
                             <ClientListItem
                                 key={client.clientId}
                                 client={client}
-                                ownClientId={props.ownClientId}
                                 setCurrentClient={setCurrentClient}
                                 setSearchParams={setSearchParams}
                             />
@@ -94,13 +96,10 @@ const ClientListItem = (props) => {
                 <ListItemAvatar>
                     <PermIdentityIcon />
                 </ListItemAvatar>
-                {RenderOwnIdCell(
-                    <ListItemText
-                        primary={props.client.address}
-                    />,
-                    props.client.clientId,
-                    props.ownClientId
-                )}
+                <ListItemText
+                    primary={props.client.alias ?? props.client.address}
+                    secondary={props.client.address}
+                />
             </ListItemButton>
             <Divider />
         </React.Fragment>

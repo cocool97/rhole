@@ -1,10 +1,11 @@
 import React from "react";
-import { Box, Divider, Typography } from "@mui/material"
+import { Box, Divider, TextField, Typography } from "@mui/material"
 import { timestampToDate } from "../utils";
-import { useSubscription } from "@apollo/client";
+import { useMutation, useSubscription } from "@apollo/client";
 import { BLOCKED_REQUESTS_SUBSCRIPTION } from "../queries/blocked_requests";
 import { LIVE_REQUESTS_SUBSCRIPTION } from "../queries/live_requests";
 import RequestsDisplay from "../Components/RequestsDisplay";
+import { SET_CLIENT_ALIAS } from "../queries/client";
 
 export const ClientInformations = (props) => {
     const { data: dataBlockedRequests, loading: loadingBlockedRequests } = useSubscription(BLOCKED_REQUESTS_SUBSCRIPTION, {
@@ -14,6 +15,18 @@ export const ClientInformations = (props) => {
     const { data: dataLiveRequests, loading: loadingLiveRequests } = useSubscription(LIVE_REQUESTS_SUBSCRIPTION, {
         variables: { clientId: props.client.clientId }
     });
+
+    const [setClientAlias, { error }] = useMutation(SET_CLIENT_ALIAS);
+
+    const remoteClientAliasUpdate = (event) => {
+        setClientAlias({
+            variables: {
+                clientId: props.client.clientId,
+                alias: event.target.value
+            }
+        });
+        if (error) { console.log(error); alert(error.message) }
+    }
 
     return (
         <Box
@@ -28,14 +41,27 @@ export const ClientInformations = (props) => {
                 flex={1}
                 alignItems="center"
             >
+                <TextField
+                    id="standard-basic-controlled"
+                    variant="standard"
+                    size="medium"
+                    defaultValue={props.client.alias ?? props.client.address}
+                    sx={{
+                        fontWeight: "bold",
+                        fontSize: 30,
+                        flex: 1,
+                        mr: "50px"
+                    }}
+                    onBlur={(event) => remoteClientAliasUpdate(event)}
+                    onKeyDown={(event) => {
+                        // on Enter pressed
+                        if (event.key === 13) {
+                            remoteClientAliasUpdate(event);
+                        }
+                    }}
+                />
                 <Typography
-                    flex={1}
-                    sx={{ fontWeight: "bold", fontSize: 30 }}
-                >{props.client.address}</Typography>
-                <Typography
-                    display="flex"
                     justifyContent="flex-end"
-                    flex={1}
                     sx={{ fontSize: 15 }}
                 >Last seen: {timestampToDate(props.client.lastSeen)}</Typography>
             </Box>
