@@ -1,5 +1,9 @@
 # rhole: Privacy as a whole
 
+<p align="center" style="text-align: center">
+  <img src="https://raw.githubusercontent.com/cocool97/rhole/main/rhole-web/public/favicon.png" width="33%"><br/>
+</p>
+
 [![dependency status](https://deps.rs/repo/github/cocool97/rhole/status.svg)](https://deps.rs/repo/github/cocool97/rhole)
 [![codecov](https://codecov.io/gh/cocool97/rhole/branch/master/graph/badge.svg)](https://codecov.io/gh/cocool97/rhole)
 
@@ -12,10 +16,10 @@ With rhole you will be able to :
 - Block all kind of DNS records like advertising, pornography, malware, fake news...
 - Monitor your DNS trafic in real-time, configure the server or unblock domains using the provided web interface.
 - Serve your own DNS records.
-- [**TODO**] Increasing your privacy on Internet by providing a DOH (DNS-Over-HTTP) recursor, aiming to reduce clear DNS traffic.
+- Increasing your privacy on Internet by providing a DOH (DNS-Over-HTTPS) recursor, aiming to reduce clear DNS traffic.
 - [**TODO**] Sign DNS records according to DNSSEC specification
 - [**TODO**] Setup a HTTP(s) proxy being able to inspect requests and block as you wish.
-- [**TODO**] Setup a DOH (DNS-Over-HTTP) server.
+- [**TODO**] Setup a DOH (DNS-Over-HTTPS) server.
 - [**TODO**] Setup a DOT (DNS-Over-TLS) server.
 - [**TODO**] Use an Android/iOS application to monitor your trafic and block domains locally, without ask the server.
 
@@ -103,9 +107,11 @@ docker run \
   rhole:latest
 ```
 
-### Locally
+### Host it behind a reverse proxy
 
-TODO
+This may be a good security practice to host `rhole` behind a reverse proxy like Nginx, Apache...
+
+Configuration is classic, except the fact that websockets must be accepted to allow for real-time traffic monitoring. The configuration may differ depending on which reverse proxy you choose, you may need to have a look at documentation.
 
 ## How to use it ?
 
