@@ -1,0 +1,27 @@
+name: Publish Docker image
+
+on: [push, release]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: "docker login"
+      run: |
+         docker login --username ${{ secrets.DOCKER_USER }} --password ${{ secrets.DOCKER_PASSWORD }} 
+    - name: Extract branch name
+      shell: bash
+      run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+      id: extract_branch 
+    - name: "docker build"
+      run: docker build . --file Dockerfile --tag ${{ secrets.DOCKER_USER }}/rhole:${BRANCH_NAME}
+      env:
+        BRANCH_NAME: ${{steps.extract_branch.outputs.branch}}
+    - name: "docker push"
+      run: docker push ${{ secrets.DOCKER_USER }}/rhole:${BRANCH_NAME}
+      env:
+        BRANCH_NAME: ${{steps.extract_branch.outputs.branch}}
+    - name: "docker push latest"
+      if: ${{ github.event_name == 'release' }}
+      run: docker push ${{ secrets.DOCKER_USER }}/rhole:latest
