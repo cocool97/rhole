@@ -6,6 +6,7 @@
 
 [![dependency status](https://deps.rs/repo/github/cocool97/rhole/status.svg)](https://deps.rs/repo/github/cocool97/rhole)
 [![codecov](https://codecov.io/gh/cocool97/rhole/branch/master/graph/badge.svg)](https://codecov.io/gh/cocool97/rhole)
+[![docker pull](https://img.shields.io/docker/pulls/cocool97/rhole.svg)](https://hub.docker.com/repository/docker/cocool97/rhole/tags)
 
 rhole is a fully open-source and community Rust / ReactJS project aiming to empower your privacy, by providing an easy-to-setup DNS server.
 
@@ -85,6 +86,8 @@ sources:
 
 ## Deployment
 
+A Docker image is compiled at every release and is available on Docker Hub: <https://hub.docker.com/repository/docker/cocool97/rhole/tags>
+
 ### Using containers: Docker / Podman
 
 A `Dockerfile` is provided to ease setup.
@@ -92,8 +95,6 @@ A `Dockerfile` is provided to ease setup.
 The previous environment variables can be mounted in Docker image using `-e VAR=VALUE` flag (many times if needed).
 
 ```bash
-docker build -t rhole:latest -f Dockerfile .
-
 docker run \
   -it \
   --rm \
@@ -103,15 +104,14 @@ docker run \
   -p 443:443/tcp \
   -e DNS_ADDR="0.0.0.0:53" \
   -e WEB_ADDR="0.0.0.0:443" \
-  -e DEBUG=1 \
-  rhole:latest
+  cocool97/rhole:latest
 ```
 
 ### Host it behind a reverse proxy
 
 This may be a good security practice to host `rhole` behind a reverse proxy like Nginx, Apache...
 
-Configuration is classic, except the fact that websockets must be accepted to allow for real-time traffic monitoring. The configuration may differ depending on which reverse proxy you choose, you may need to have a look at documentation.
+Configuration is classic, except the fact that websockets must be forwarded to allow for real-time traffic monitoring. The configuration may differ depending on which reverse proxy you choose, you may need to have a look at documentation.
 
 ## How to use it ?
 
