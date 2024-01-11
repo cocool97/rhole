@@ -16,4 +16,4 @@ jobs:
       run: docker push ${{ secrets.DOCKER_USER }}/rhole:${{github.sha}}
     - name: "docker push latest"
       if: ${{ github.event_name == 'release' }}
-      run: docker push ${{ secrets.DOCKER_USER }}/rhole:latest
+      run: docker push ${{ secrets.DOCKER_USER }}/rhole:${{github.sha}} ${{ secrets.DOCKER_USER }}/rhole:latest
