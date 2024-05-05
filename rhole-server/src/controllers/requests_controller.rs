@@ -137,7 +137,7 @@ impl RequestsController {
                 Ok(Some(domain_id)) => {
                     log::warn!("[{}] Blacklisted domain {}", request.src(), query_question);
 
-                    let response = dns_default_response(request, ResponseCode::Refused);
+                    let response = dns_default_response(request, ResponseCode::NXDomain);
                     let response_info = response_handle.send_response(response).await?;
 
                     if let Err(e) = self

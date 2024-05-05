@@ -6,7 +6,7 @@ use async_graphql_axum::GraphQLSubscription;
 use axum::{
     body::Body,
     extract::State,
-    http::Request,
+    http::{Request, StatusCode},
     response::{IntoResponse, Redirect},
     routing::get,
     Router,
@@ -14,7 +14,6 @@ use axum::{
 use axum_server::tls_rustls::RustlsConfig;
 use hickory_server::ServerFuture;
 use log::{error, info};
-use reqwest::StatusCode;
 use rustls::{Certificate, PrivateKey};
 use rustls_pemfile::{certs, pkcs8_private_keys};
 use rustls_pki_types::PrivatePkcs8KeyDer;
